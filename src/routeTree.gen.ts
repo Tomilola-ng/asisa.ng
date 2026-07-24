@@ -12,11 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRepRouteImport } from './routes/_app.rep'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppGroupsRouteImport } from './routes/_app.groups'
 import { Route as AppFeedRouteImport } from './routes/_app.feed'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCoursesRouteImport } from './routes/_app.courses'
+import { Route as AppAdminRouteImport } from './routes/_app.admin'
 import { Route as AppGroupsIdRouteImport } from './routes/_app.groups.$id'
 import { Route as AppFeedDepartmentRouteImport } from './routes/_app.feed.department'
 import { Route as AppFeedClassRouteImport } from './routes/_app.feed.class'
@@ -35,6 +37,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppRepRoute = AppRepRouteImport.update({
+  id: '/rep',
+  path: '/rep',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppProfileRoute = AppProfileRouteImport.update({
   id: '/profile',
@@ -61,6 +68,11 @@ const AppCoursesRoute = AppCoursesRouteImport.update({
   path: '/courses',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppGroupsIdRoute = AppGroupsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -85,11 +97,13 @@ const AppCoursesIdRoute = AppCoursesIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AppAdminRoute
   '/courses': typeof AppCoursesRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/feed': typeof AppFeedRouteWithChildren
   '/groups': typeof AppGroupsRouteWithChildren
   '/profile': typeof AppProfileRoute
+  '/rep': typeof AppRepRoute
   '/courses/$id': typeof AppCoursesIdRoute
   '/feed/class': typeof AppFeedClassRoute
   '/feed/department': typeof AppFeedDepartmentRoute
@@ -98,11 +112,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AppAdminRoute
   '/courses': typeof AppCoursesRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/feed': typeof AppFeedRouteWithChildren
   '/groups': typeof AppGroupsRouteWithChildren
   '/profile': typeof AppProfileRoute
+  '/rep': typeof AppRepRoute
   '/courses/$id': typeof AppCoursesIdRoute
   '/feed/class': typeof AppFeedClassRoute
   '/feed/department': typeof AppFeedDepartmentRoute
@@ -113,11 +129,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_app/admin': typeof AppAdminRoute
   '/_app/courses': typeof AppCoursesRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/feed': typeof AppFeedRouteWithChildren
   '/_app/groups': typeof AppGroupsRouteWithChildren
   '/_app/profile': typeof AppProfileRoute
+  '/_app/rep': typeof AppRepRoute
   '/_app/courses/$id': typeof AppCoursesIdRoute
   '/_app/feed/class': typeof AppFeedClassRoute
   '/_app/feed/department': typeof AppFeedDepartmentRoute
@@ -128,11 +146,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/admin'
     | '/courses'
     | '/dashboard'
     | '/feed'
     | '/groups'
     | '/profile'
+    | '/rep'
     | '/courses/$id'
     | '/feed/class'
     | '/feed/department'
@@ -141,11 +161,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/admin'
     | '/courses'
     | '/dashboard'
     | '/feed'
     | '/groups'
     | '/profile'
+    | '/rep'
     | '/courses/$id'
     | '/feed/class'
     | '/feed/department'
@@ -155,11 +177,13 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/auth'
+    | '/_app/admin'
     | '/_app/courses'
     | '/_app/dashboard'
     | '/_app/feed'
     | '/_app/groups'
     | '/_app/profile'
+    | '/_app/rep'
     | '/_app/courses/$id'
     | '/_app/feed/class'
     | '/_app/feed/department'
@@ -195,6 +219,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/rep': {
+      id: '/_app/rep'
+      path: '/rep'
+      fullPath: '/rep'
+      preLoaderRoute: typeof AppRepRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/profile': {
       id: '/_app/profile'
       path: '/profile'
@@ -228,6 +259,13 @@ declare module '@tanstack/react-router' {
       path: '/courses'
       fullPath: '/courses'
       preLoaderRoute: typeof AppCoursesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/admin': {
+      id: '/_app/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/groups/$id': {
@@ -299,19 +337,23 @@ const AppGroupsRouteWithChildren = AppGroupsRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppAdminRoute: typeof AppAdminRoute
   AppCoursesRoute: typeof AppCoursesRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
   AppFeedRoute: typeof AppFeedRouteWithChildren
   AppGroupsRoute: typeof AppGroupsRouteWithChildren
   AppProfileRoute: typeof AppProfileRoute
+  AppRepRoute: typeof AppRepRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAdminRoute: AppAdminRoute,
   AppCoursesRoute: AppCoursesRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
   AppFeedRoute: AppFeedRouteWithChildren,
   AppGroupsRoute: AppGroupsRouteWithChildren,
   AppProfileRoute: AppProfileRoute,
+  AppRepRoute: AppRepRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
