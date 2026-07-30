@@ -1,25 +1,38 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { store } from "@/lib/data";
+import { getCourse } from "@/lib/api";
+import { requireAuthRedirect } from "@/lib/auth-guard";
 import { ArrowLeft, BoxArrowUpRight, FileEarmarkText, Folder2Open } from "react-bootstrap-icons";
 
 export const Route = createFileRoute("/_app/courses/$id")({
-  loader: ({ params }) => {
-    const course = store.courses.find((c) => c.id === params.id);
-    if (!course) throw notFound();
-    return { course };
-  },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: loaderData ? `${loaderData.course.code} — ASISA` : "Course — ASISA" },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Course — ASISA" }] }),
+  beforeLoad: () => requireAuthRedirect(),
   component: CoursePage,
 });
 
 function CoursePage() {
-  const { course } = Route.useLoaderData();
+  const { id } = Route.useParams();
+  const { data: course, isLoading, isError } = useQuery({
+    queryKey: ["course", id],
+    queryFn: () => getCourse(id),
+  });
+
+  if (isLoading) {
+    return <div className="text-sm text-muted-foreground">Loading course…</div>;
+  }
+
+  if (isError || !course) {
+    return (
+      <div className="space-y-4">
+        <Link to="/courses" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft size={14} /> All courses
+        </Link>
+        <p className="text-sm text-muted-foreground">Course not found.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -28,7 +41,13 @@ function CoursePage() {
       </Link>
 
       <div className="asisa-card overflow-hidden">
-        <div className="thumb-16-5" style={{ background: "var(--color-hunter)" }} />
+        <div
+          className="thumb-16-5 bg-cover bg-center"
+          style={{
+            backgroundColor: "var(--color-hunter)",
+            backgroundImage: course.thumbnailUrl ? `url(${course.thumbnailUrl})` : undefined,
+          }}
+        />
         <div className="p-6">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary">{course.code}</Badge>

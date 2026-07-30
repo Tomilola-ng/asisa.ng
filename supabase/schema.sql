@@ -198,6 +198,20 @@ as $$
   )
 $$;
 
+-- Membership check that bypasses RLS (avoids groups <-> group_members recursion)
+create or replace function public.is_group_member(_group_id uuid, _user_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.group_members
+    where group_id = _group_id and user_id = _user_id
+  )
+$$;
+
 -- ---------- TRIGGERS -------------------------------------------------
 create or replace function public.handle_new_user()
 returns trigger
@@ -205,13 +219,14 @@ language plpgsql
 security definer set search_path = public
 as $$
 begin
-  insert into public.profiles (id, email, full_name, matric_number, level)
+  insert into public.profiles (id, email, full_name, matric_number, level, department_id)
   values (
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'full_name', ''),
     nullif(new.raw_user_meta_data->>'matric_number',''),
-    nullif(new.raw_user_meta_data->>'level','')::int
+    nullif(new.raw_user_meta_data->>'level','')::int,
+    (select id from public.departments where code = 'ASI' limit 1)
   );
   insert into public.user_roles (user_id, role) values (new.id, 'student');
   return new;
@@ -227,17 +242,18 @@ create trigger on_auth_user_created
 -- =====================================================================
 grant usage on schema public to anon, authenticated;
 
-grant select on public.departments to anon, authenticated;
+-- Authenticated needs write grants; RLS still gates who can actually write.
+grant select, insert, update, delete on public.departments to anon, authenticated;
 grant all    on public.departments to service_role;
 
-grant select on public.sessions    to anon, authenticated;
-grant all    on public.sessions    to service_role;
+grant select, insert, update, delete on public.sessions to anon, authenticated;
+grant all    on public.sessions to service_role;
 
-grant select, update on public.profiles to authenticated;
-grant all           on public.profiles to service_role;
+grant select, insert, update, delete on public.profiles to authenticated;
+grant all                           on public.profiles to service_role;
 
-grant select on public.user_roles to authenticated;
-grant all    on public.user_roles to service_role;
+grant select, insert, update, delete on public.user_roles to authenticated;
+grant all                            on public.user_roles to service_role;
 
 grant select on public.courses to anon, authenticated;
 grant insert, update, delete on public.courses to authenticated;
@@ -327,8 +343,7 @@ create policy "groups readable" on public.groups
   using (
     not is_private
     or owner_id = auth.uid()
-    or exists (select 1 from public.group_members gm
-               where gm.group_id = id and gm.user_id = auth.uid())
+    or public.is_group_member(id, auth.uid())
     or public.has_role(auth.uid(), 'super_admin')
   );
 create policy "groups insert own" on public.groups
@@ -342,11 +357,18 @@ create policy "groups owner delete" on public.groups
   for delete to authenticated
   using (owner_id = auth.uid() or public.has_role(auth.uid(), 'super_admin'));
 
-create policy "group_members self read" on public.group_members
+create policy "group_members readable" on public.group_members
   for select to authenticated
-  using (user_id = auth.uid()
-         or exists (select 1 from public.groups g where g.id = group_id and g.owner_id = auth.uid())
-         or public.has_role(auth.uid(),'super_admin'));
+  using (
+    user_id = auth.uid()
+    or public.has_role(auth.uid(), 'super_admin')
+    or exists (
+      select 1 from public.groups g
+      where g.id = group_id
+        and (g.owner_id = auth.uid() or not g.is_private)
+    )
+    or public.is_group_member(group_id, auth.uid())
+  );
 create policy "group_members self join" on public.group_members
   for insert to authenticated with check (user_id = auth.uid());
 create policy "group_members self leave" on public.group_members
@@ -363,9 +385,7 @@ create policy "posts read" on public.posts
           select 1 from public.profiles p
           where p.id = auth.uid() and p.department_id = posts.scope_id))
     or (scope = 'class' and public.in_class(posts.scope_id, posts.class_level))
-    or (scope = 'group' and exists (
-          select 1 from public.group_members gm
-          where gm.group_id = posts.scope_id and gm.user_id = auth.uid()))
+    or (scope = 'group' and public.is_group_member(posts.scope_id, auth.uid()))
     or public.has_role(auth.uid(), 'super_admin')
   );
 create policy "posts insert own" on public.posts
@@ -377,9 +397,7 @@ create policy "posts insert own" on public.posts
             select 1 from public.profiles p
             where p.id = auth.uid() and p.department_id = posts.scope_id))
       or (scope = 'class' and public.in_class(posts.scope_id, posts.class_level))
-      or (scope = 'group' and exists (
-            select 1 from public.group_members gm
-            where gm.group_id = posts.scope_id and gm.user_id = auth.uid()))
+      or (scope = 'group' and public.is_group_member(posts.scope_id, auth.uid()))
     )
   );
 create policy "posts author update" on public.posts
@@ -427,8 +445,8 @@ insert into storage.buckets (id, name, public) values
 on conflict (id) do nothing;
 
 -- Storage policies (storage.objects)
-create policy "public read course thumbnails" on storage.objects
-  for select using (bucket_id = 'course-thumbnails');
+-- Public buckets serve files via public URLs; avoid broad SELECT policies that
+-- allow listing every object in the bucket.
 create policy "course reps write thumbnails" on storage.objects
   for insert to authenticated
   with check (
@@ -442,21 +460,64 @@ create policy "course reps update thumbnails" on storage.objects
          and (public.has_role(auth.uid(),'super_admin')
               or public.has_role(auth.uid(),'course_rep')));
 
-create policy "public read profile photos" on storage.objects
-  for select using (bucket_id = 'profile-photos');
 create policy "users manage own profile photo" on storage.objects
   for all to authenticated
   using (bucket_id = 'profile-photos' and owner = auth.uid())
   with check (bucket_id = 'profile-photos' and owner = auth.uid());
 
-create policy "public read group images" on storage.objects
-  for select using (bucket_id = 'group-images');
 create policy "authenticated write group images" on storage.objects
   for insert to authenticated
   with check (bucket_id = 'group-images');
 create policy "owner update group image" on storage.objects
   for update to authenticated
   using (bucket_id = 'group-images' and owner = auth.uid());
+
+-- Helper functions: not callable via PostgREST by anon
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+revoke execute on function public.has_role(uuid, public.app_role) from public, anon;
+revoke execute on function public.in_class(uuid, int) from public, anon;
+revoke execute on function public.is_course_rep_for(uuid, uuid, int) from public, anon;
+revoke all on function public.is_group_member(uuid, uuid) from public;
+grant execute on function public.is_group_member(uuid, uuid) to authenticated;
+
+-- =====================================================================
+-- SEED (idempotent)
+-- =====================================================================
+insert into public.departments (code, name)
+values
+  ('ASI', 'Actuarial Science & Insurance'),
+  ('FIN', 'Finance'),
+  ('ACC', 'Accounting')
+on conflict (code) do nothing;
+
+insert into public.sessions (label, is_current)
+values
+  ('2023/2024', false),
+  ('2024/2025', false),
+  ('2025/2026', true)
+on conflict (label) do nothing;
+
+insert into public.courses (code, title, description, department_id, level, semester, units, drive_folder_url)
+select
+  v.code, v.title, v.description, d.id, v.level, v.semester, v.units, v.drive_folder_url
+from public.departments d
+cross join (
+  values
+    ('ACT 301', 'Life Contingencies I',
+     'Introduction to life tables, survival models, and single-life annuities and assurances.',
+     300, 1, 3, 'https://drive.google.com/drive/folders/example'),
+    ('ACT 302', 'Risk Theory',
+     'Individual and collective risk models, ruin theory, and premium calculation principles.',
+     300, 2, 3, null),
+    ('INS 401', 'Reinsurance',
+     'Structures of proportional and non-proportional reinsurance and their financial impact.',
+     400, 1, 2, null),
+    ('ACT 205', 'Financial Mathematics',
+     'Interest theory, annuities-certain, and loan schedules.',
+     200, 1, 3, null)
+) as v(code, title, description, level, semester, units, drive_folder_url)
+where d.code = 'ASI'
+on conflict (department_id, code) do nothing;
 
 -- =====================================================================
 -- END

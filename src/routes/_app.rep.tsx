@@ -1,8 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
-import { store, LEVELS, SEMESTERS, DEPARTMENTS } from "@/lib/data";
+import { LEVELS, SEMESTERS } from "@/lib/data";
 import type { Course } from "@/lib/data";
+import { listCourses, listDepartments, uploadCourseThumbnail, upsertCourse } from "@/lib/api";
+import { requireAuthRedirect } from "@/lib/auth-guard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,7 +17,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -28,14 +30,29 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/rep")({
   head: () => ({ meta: [{ title: "Course rep dashboard — ASISA" }] }),
+  beforeLoad: () => requireAuthRedirect(),
   component: RepDashboard,
 });
+
+function emptyCourse(departmentId: string, level: Course["level"]): Course {
+  return {
+    id: "",
+    code: "",
+    title: "",
+    departmentId,
+    level,
+    semester: 1,
+    units: 3,
+    description: "",
+  };
+}
 
 function RepDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [, force] = useState(0);
+  const queryClient = useQueryClient();
   const [editing, setEditing] = useState<Course | null>(null);
+  const [thumbFile, setThumbFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (user && user.role !== "course_rep" && user.role !== "super_admin") {
@@ -44,23 +61,51 @@ function RepDashboard() {
     }
   }, [user, navigate]);
 
-  // Scope: only courses in the rep's department + level
-  const scopedDept = user?.scopedDepartmentId ?? "d-asi";
+  const { data: departments = [] } = useQuery({
+    queryKey: ["departments"],
+    queryFn: listDepartments,
+  });
+  const { data: courses = [] } = useQuery({
+    queryKey: ["courses"],
+    queryFn: listCourses,
+  });
+
+  const scopedDept =
+    user?.scopedDepartmentId ??
+    user?.departmentId ??
+    departments.find((d) => d.code === "ASI")?.id ??
+    "";
   const scopedLevel = user?.scopedLevel ?? user?.level;
-  const mine = store.courses.filter(
+  const mine = courses.filter(
     (c) =>
-      c.departmentId === scopedDept &&
-      (user?.role === "super_admin" || !scopedLevel || c.level === scopedLevel),
+      user?.role === "super_admin" ||
+      (c.departmentId === scopedDept && (!scopedLevel || c.level === scopedLevel)),
   );
 
-  function save(c: Course) {
-    const idx = store.courses.findIndex((x) => x.id === c.id);
-    if (idx >= 0) store.courses[idx] = c;
-    else store.courses.push(c);
-    setEditing(null);
-    force((n) => n + 1);
-    toast.success("Course saved");
-  }
+  const saveMutation = useMutation({
+    mutationFn: async (course: Course) => {
+      if (!user) throw new Error("Not signed in");
+      const saved = await upsertCourse(
+        {
+          ...course,
+          id: course.id || undefined,
+          departmentId: course.departmentId || scopedDept || departments[0]?.id || "",
+        },
+        user.id,
+      );
+      if (thumbFile && saved.id) {
+        await uploadCourseThumbnail(saved.id, user.id, thumbFile);
+      }
+      return saved;
+    },
+    onSuccess: async () => {
+      setEditing(null);
+      setThumbFile(null);
+      await queryClient.invalidateQueries({ queryKey: ["courses"] });
+      toast.success("Course saved");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -71,16 +116,13 @@ function RepDashboard() {
             <ShieldCheck size={14} className="text-primary" /> Scope enforced by RLS: your department & level only.
           </p>
         </div>
-        <Button onClick={() => setEditing({
-          id: crypto.randomUUID(),
-          code: "",
-          title: "",
-          departmentId: scopedDept,
-          level: (scopedLevel as Course["level"]) ?? 300,
-          semester: 1,
-          units: 3,
-          description: "",
-        })}>
+        <Button
+          onClick={() =>
+            setEditing(
+              emptyCourse(scopedDept, (scopedLevel as Course["level"]) ?? 300),
+            )
+          }
+        >
           <Plus size={16} className="mr-1.5" /> Add course
         </Button>
       </div>
@@ -110,19 +152,38 @@ function RepDashboard() {
         )}
       </div>
 
-      <CourseDialog editing={editing} onClose={() => setEditing(null)} onSave={save} />
+      <CourseDialog
+        editing={editing}
+        departments={departments}
+        thumbFile={thumbFile}
+        onThumbFile={setThumbFile}
+        onClose={() => {
+          setEditing(null);
+          setThumbFile(null);
+        }}
+        onSave={(c) => saveMutation.mutate(c)}
+        saving={saveMutation.isPending}
+      />
     </div>
   );
 }
 
 function CourseDialog({
   editing,
+  departments,
+  thumbFile,
+  onThumbFile,
   onClose,
   onSave,
+  saving,
 }: {
   editing: Course | null;
+  departments: Array<{ id: string; code: string; name: string }>;
+  thumbFile: File | null;
+  onThumbFile: (f: File | null) => void;
   onClose: () => void;
   onSave: (c: Course) => void;
+  saving: boolean;
 }) {
   const [form, setForm] = useState<Course | null>(editing);
   useEffect(() => setForm(editing), [editing]);
@@ -145,6 +206,20 @@ function CourseDialog({
           <div className="space-y-1.5">
             <Label>Title</Label>
             <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Department</Label>
+            <Select
+              value={form.departmentId}
+              onValueChange={(v) => setForm({ ...form, departmentId: v })}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {departments.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>{d.code}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
@@ -178,15 +253,27 @@ function CourseDialog({
             <Label>Past questions URL</Label>
             <Input value={form.pastQuestionsUrl ?? ""} onChange={(e) => setForm({ ...form, pastQuestionsUrl: e.target.value })} placeholder="https://drive.google.com/..." />
           </div>
+          <div className="space-y-1.5">
+            <Label>Thumbnail image</Label>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => onThumbFile(e.target.files?.[0] ?? null)}
+            />
+            {thumbFile ? (
+              <p className="text-xs text-muted-foreground">{thumbFile.name}</p>
+            ) : form.thumbnailUrl ? (
+              <p className="text-xs text-muted-foreground">Current thumbnail set</p>
+            ) : null}
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => onSave(form)}>Save</Button>
+          <Button disabled={saving || !form.code.trim() || !form.title.trim()} onClick={() => onSave(form)}>
+            {saving ? "Saving…" : "Save"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
-// re-export for typing consistency (avoid unused-import warning if tree-shaken)
-export const _departments = DEPARTMENTS;

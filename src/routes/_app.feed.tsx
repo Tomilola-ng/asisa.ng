@@ -1,13 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Feed } from "@/components/feed";
+import { CampusFeedSection } from "@/components/campus-feed-section";
 
 export const Route = createFileRoute("/_app/feed")({
-  head: () => ({ meta: [{ title: "Public feed — ASISA" }] }),
-  component: () => (
-    <Feed
-      title="Public feed"
-      description="Announcements and discussion visible to all ASISA members."
-      scope="public"
-    />
-  ),
+  head: () => ({ meta: [{ title: "Campus feed — ASISA" }] }),
+  component: () => <CampusFeedSection />,
 });
