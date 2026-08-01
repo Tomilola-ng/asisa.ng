@@ -13,11 +13,16 @@ import type {
   ReactionKind,
   Role,
   Semester,
+  AdminUser,
 } from "./types";
 
 function throwIfError(error: { message: string } | null) {
   if (error) throw new Error(error.message);
 }
+
+/** Set VITE_COURSES_HAVE_SESSION=true in .env after running add-course-session-id.sql */
+export const coursesHaveSession =
+  import.meta.env.VITE_COURSES_HAVE_SESSION === "true";
 
 function must<T>(data: T | null, message = "Unexpected empty response"): T {
   if (data == null) throw new Error(message);
@@ -37,6 +42,7 @@ function mapCourse(row: {
   drive_folder_url: string | null;
   past_questions_url: string | null;
   representative_id: string | null;
+  session_id: string | null;
 }): Course {
   return {
     id: row.id,
@@ -52,6 +58,7 @@ function mapCourse(row: {
     driveFolderUrl: row.drive_folder_url ?? undefined,
     pastQuestionsUrl: row.past_questions_url ?? undefined,
     representativeId: row.representative_id ?? undefined,
+    sessionId: row.session_id ?? undefined,
   };
 }
 
@@ -124,6 +131,31 @@ export async function getCourse(id: string): Promise<Course | null> {
   return data ? mapCourse(data) : null;
 }
 
+function courseRowPayload(
+  course: Omit<Course, "thumbnailUrl" | "id"> & { id?: string },
+  userId?: string,
+) {
+  const row: Record<string, unknown> = {
+    code: course.code,
+    title: course.title,
+    description: course.description,
+    department_id: course.departmentId,
+    level: course.level,
+    semester: course.semester,
+    units: course.units,
+    drive_folder_url: course.driveFolderUrl || null,
+    past_questions_url: course.pastQuestionsUrl || null,
+    thumbnail_path: course.thumbnailPath || null,
+    representative_id: course.representativeId || null,
+  };
+  // Only send session_id when the DB column exists (see supabase/patches/add-course-session-id.sql).
+  if (coursesHaveSession && course.sessionId !== undefined) {
+    row.session_id = course.sessionId || null;
+  }
+  if (userId) row.created_by = userId;
+  return row;
+}
+
 export async function upsertCourse(
   course: Omit<Course, "thumbnailUrl" | "id"> & { id?: string },
   userId: string,
@@ -133,17 +165,7 @@ export async function upsertCourse(
     const { data, error } = await client
       .from("courses")
       .update({
-        code: course.code,
-        title: course.title,
-        description: course.description,
-        department_id: course.departmentId,
-        level: course.level,
-        semester: course.semester,
-        units: course.units,
-        drive_folder_url: course.driveFolderUrl || null,
-        past_questions_url: course.pastQuestionsUrl || null,
-        thumbnail_path: course.thumbnailPath || null,
-        representative_id: course.representativeId || null,
+        ...courseRowPayload(course),
         updated_at: new Date().toISOString(),
       })
       .eq("id", course.id)
@@ -155,24 +177,17 @@ export async function upsertCourse(
 
   const { data, error } = await client
     .from("courses")
-    .insert({
-      code: course.code,
-      title: course.title,
-      description: course.description,
-      department_id: course.departmentId,
-      level: course.level,
-      semester: course.semester,
-      units: course.units,
-      drive_folder_url: course.driveFolderUrl || null,
-      past_questions_url: course.pastQuestionsUrl || null,
-      thumbnail_path: course.thumbnailPath || null,
-      representative_id: course.representativeId || null,
-      created_by: userId,
-    })
+    .insert(courseRowPayload(course, userId))
     .select("*")
     .single();
   throwIfError(error);
   return mapCourse(must(data));
+}
+
+export async function deleteCourse(courseId: string): Promise<void> {
+  const client = requireSupabase();
+  const { error } = await client.from("courses").delete().eq("id", courseId);
+  throwIfError(error);
 }
 
 export async function uploadCourseThumbnail(
@@ -181,12 +196,29 @@ export async function uploadCourseThumbnail(
   file: File,
 ): Promise<string> {
   const client = requireSupabase();
-  const ext = file.name.split(".").pop() || "jpg";
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
   const path = `${userId}/${courseId}.${ext}`;
-  const { error: uploadError } = await client.storage
-    .from("course-thumbnails")
-    .upload(path, file, { upsert: true, contentType: file.type });
-  throwIfError(uploadError);
+  const bucket = client.storage.from("course-thumbnails");
+
+  const { data: existing } = await client
+    .from("courses")
+    .select("thumbnail_path")
+    .eq("id", courseId)
+    .maybeSingle();
+
+  const pathsToRemove = new Set<string>([path]);
+  if (existing?.thumbnail_path) pathsToRemove.add(existing.thumbnail_path);
+  await bucket.remove([...pathsToRemove]);
+
+  const { error: uploadError } = await bucket.upload(path, file, {
+    contentType: file.type || "image/jpeg",
+    upsert: false,
+  });
+  if (uploadError) {
+    throw new Error(
+      `Thumbnail upload failed: ${uploadError.message}. If this mentions row-level security, run supabase/patches/fix-thumbnail-storage-rls.sql in the Supabase SQL editor.`,
+    );
+  }
 
   const { error } = await client
     .from("courses")
@@ -539,6 +571,31 @@ export async function createDepartment(code: string, name: string): Promise<Depa
   return { id: dept.id, code: dept.code, name: dept.name };
 }
 
+export async function updateDepartment(
+  id: string,
+  patch: { code?: string; name?: string },
+): Promise<Department> {
+  const client = requireSupabase();
+  const update: { code?: string; name?: string } = {};
+  if (patch.code !== undefined) update.code = patch.code.toUpperCase();
+  if (patch.name !== undefined) update.name = patch.name;
+  const { data, error } = await client
+    .from("departments")
+    .update(update)
+    .eq("id", id)
+    .select("*")
+    .single();
+  throwIfError(error);
+  const dept = must(data);
+  return { id: dept.id, code: dept.code, name: dept.name };
+}
+
+export async function deleteDepartment(id: string): Promise<void> {
+  const client = requireSupabase();
+  const { error } = await client.from("departments").delete().eq("id", id);
+  throwIfError(error);
+}
+
 export async function createSession(label: string, isCurrent = false): Promise<AcademicSession> {
   const client = requireSupabase();
   if (isCurrent) {
@@ -552,6 +609,22 @@ export async function createSession(label: string, isCurrent = false): Promise<A
   throwIfError(error);
   const session = must(data);
   return { id: session.id, label: session.label, isCurrent: session.is_current };
+}
+
+export async function findOrCreateSession(label: string): Promise<AcademicSession> {
+  const trimmed = label.trim();
+  if (!trimmed) throw new Error("Session label is required");
+  const client = requireSupabase();
+  const { data: existing, error: findError } = await client
+    .from("sessions")
+    .select("*")
+    .eq("label", trimmed)
+    .maybeSingle();
+  throwIfError(findError);
+  if (existing) {
+    return { id: existing.id, label: existing.label, isCurrent: existing.is_current };
+  }
+  return createSession(trimmed, false);
 }
 
 export async function assignRole(input: {
@@ -570,13 +643,49 @@ export async function assignRole(input: {
   throwIfError(error);
 }
 
+export async function deleteRole(roleId: string): Promise<void> {
+  const client = requireSupabase();
+  const { error } = await client.from("user_roles").delete().eq("id", roleId);
+  throwIfError(error);
+}
+
+export async function updateAdminUserProfile(
+  userId: string,
+  patch: {
+    fullName?: string;
+    matricNumber?: string;
+    level?: number;
+    departmentId?: string | null;
+  },
+): Promise<void> {
+  await updateProfileRow(userId, {
+    fullName: patch.fullName,
+    matricNumber: patch.matricNumber,
+    level: patch.level,
+    departmentId: patch.departmentId ?? undefined,
+  });
+}
+
+export async function deleteAdminUser(userId: string): Promise<void> {
+  const client = requireSupabase();
+  const { error } = await client.rpc("admin_delete_user", { target_user_id: userId });
+  throwIfError(error);
+}
+
 export async function listProfilesForAdmin(): Promise<
-  Array<{ id: string; fullName: string; email: string | null; level: number | null }>
+  Array<{
+    id: string;
+    fullName: string;
+    email: string | null;
+    level: number | null;
+    matricNumber: string | null;
+    departmentId: string | null;
+  }>
 > {
   const client = requireSupabase();
   const { data, error } = await client
     .from("profiles")
-    .select("id, full_name, email, level")
+    .select("id, full_name, email, level, matric_number, department_id")
     .order("full_name");
   throwIfError(error);
   return (data ?? []).map((p) => ({
@@ -584,6 +693,32 @@ export async function listProfilesForAdmin(): Promise<
     fullName: p.full_name,
     email: p.email,
     level: p.level,
+    matricNumber: p.matric_number,
+    departmentId: p.department_id,
+  }));
+}
+
+export async function listAdminUsers(): Promise<AdminUser[]> {
+  const [profiles, roles] = await Promise.all([listProfilesForAdmin(), listRolesForAdmin()]);
+  const rolesByUser = new Map<string, AdminUser["roles"]>();
+  for (const role of roles) {
+    const list = rolesByUser.get(role.userId) ?? [];
+    list.push({
+      id: role.id,
+      role: role.role,
+      departmentId: role.departmentId,
+      level: role.level,
+    });
+    rolesByUser.set(role.userId, list);
+  }
+  return profiles.map((p) => ({
+    id: p.id,
+    fullName: p.fullName,
+    email: p.email,
+    matricNumber: p.matricNumber,
+    level: p.level,
+    departmentId: p.departmentId,
+    roles: rolesByUser.get(p.id) ?? [],
   }));
 }
 

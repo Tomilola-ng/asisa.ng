@@ -46,6 +46,7 @@ export type Database = {
           past_questions_url: string | null;
           representative_id: string | null;
           semester: number;
+          session_id: string | null;
           thumbnail_path: string | null;
           title: string;
           units: number;
@@ -63,6 +64,7 @@ export type Database = {
           past_questions_url?: string | null;
           representative_id?: string | null;
           semester: number;
+          session_id?: string | null;
           thumbnail_path?: string | null;
           title: string;
           units?: number;
@@ -80,6 +82,7 @@ export type Database = {
           past_questions_url?: string | null;
           representative_id?: string | null;
           semester?: number;
+          session_id?: string | null;
           thumbnail_path?: string | null;
           title?: string;
           units?: number;
@@ -303,6 +306,10 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      admin_delete_user: {
+        Args: { target_user_id: string };
+        Returns: undefined;
+      };
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"];

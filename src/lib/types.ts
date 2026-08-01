@@ -30,6 +30,7 @@ export interface Course {
   driveFolderUrl?: string;
   pastQuestionsUrl?: string;
   representativeId?: string;
+  sessionId?: string;
 }
 
 export interface Post {
@@ -72,6 +73,21 @@ export interface Group {
 
 export const LEVELS = [100, 200, 300, 400, 500] as const;
 export const SEMESTERS = [1, 2] as const;
+
+export interface AdminUser {
+  id: string;
+  fullName: string;
+  email: string | null;
+  matricNumber: string | null;
+  level: number | null;
+  departmentId: string | null;
+  roles: Array<{
+    id: string;
+    role: Role;
+    departmentId: string | null;
+    level: number | null;
+  }>;
+}
 
 export interface AsisaUser {
   id: string;

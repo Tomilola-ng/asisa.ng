@@ -30,8 +30,12 @@ where email = 'you@example.com'
 on conflict do nothing;
 ```
 
-Then sign out and sign back in. From **Super admin** you can assign course-rep
-roles and manage departments/sessions.
+Then sign out and sign back in. From **Super admin** you can manage users and
+departments, and assign course-rep roles.
+
+If you already deployed an older schema, run
+[`supabase/patches/admin-improvements.sql`](./supabase/patches/admin-improvements.sql)
+once in the SQL editor (course sessions, thumbnail upload fix, admin delete user).
 
 ## Demo mode (no Supabase yet)
 

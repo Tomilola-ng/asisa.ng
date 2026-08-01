@@ -88,6 +88,7 @@ create table if not exists public.courses (
   drive_folder_url   text, -- Google Drive folder for course files
   past_questions_url text, -- Google Drive folder or file for past questions
   representative_id  uuid references auth.users(id) on delete set null,
+  session_id         uuid references public.sessions(id) on delete set null,
   created_by         uuid references auth.users(id) on delete set null,
   created_at         timestamptz not null default now(),
   updated_at         timestamptz not null default now(),
@@ -447,18 +448,37 @@ on conflict (id) do nothing;
 -- Storage policies (storage.objects)
 -- Public buckets serve files via public URLs; avoid broad SELECT policies that
 -- allow listing every object in the bucket.
-create policy "course reps write thumbnails" on storage.objects
+-- Thumbnails: same owner-based pattern as profile-photos (uploader owns the object).
+drop policy if exists "course reps write thumbnails" on storage.objects;
+drop policy if exists "course reps update thumbnails" on storage.objects;
+drop policy if exists "course thumbnail insert" on storage.objects;
+drop policy if exists "course thumbnail update" on storage.objects;
+drop policy if exists "course thumbnail delete" on storage.objects;
+drop policy if exists "course thumbnail manage" on storage.objects;
+drop policy if exists "course thumbnail own files" on storage.objects;
+
+create policy "course thumbnail insert" on storage.objects
   for insert to authenticated
   with check (
     bucket_id = 'course-thumbnails'
-    and (public.has_role(auth.uid(),'super_admin')
-         or public.has_role(auth.uid(),'course_rep'))
+    and auth.uid() = owner
   );
-create policy "course reps update thumbnails" on storage.objects
+create policy "course thumbnail update" on storage.objects
   for update to authenticated
-  using (bucket_id = 'course-thumbnails'
-         and (public.has_role(auth.uid(),'super_admin')
-              or public.has_role(auth.uid(),'course_rep')));
+  using (
+    bucket_id = 'course-thumbnails'
+    and auth.uid() = owner
+  )
+  with check (
+    bucket_id = 'course-thumbnails'
+    and auth.uid() = owner
+  );
+create policy "course thumbnail delete" on storage.objects
+  for delete to authenticated
+  using (
+    bucket_id = 'course-thumbnails'
+    and auth.uid() = owner
+  );
 
 create policy "users manage own profile photo" on storage.objects
   for all to authenticated
@@ -472,6 +492,24 @@ create policy "owner update group image" on storage.objects
   for update to authenticated
   using (bucket_id = 'group-images' and owner = auth.uid());
 
+-- Super admin: delete a user account (auth.users cascade removes profile, roles, etc.)
+create or replace function public.admin_delete_user(target_user_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+begin
+  if not public.has_role(auth.uid(), 'super_admin') then
+    raise exception 'Only super admins can delete users';
+  end if;
+  if target_user_id = auth.uid() then
+    raise exception 'You cannot delete your own account here';
+  end if;
+  delete from auth.users where id = target_user_id;
+end;
+$$;
+
 -- Helper functions: not callable via PostgREST by anon
 revoke execute on function public.handle_new_user() from public, anon, authenticated;
 revoke execute on function public.has_role(uuid, public.app_role) from public, anon;
@@ -479,6 +517,9 @@ revoke execute on function public.in_class(uuid, int) from public, anon;
 revoke execute on function public.is_course_rep_for(uuid, uuid, int) from public, anon;
 revoke all on function public.is_group_member(uuid, uuid) from public;
 grant execute on function public.is_group_member(uuid, uuid) to authenticated;
+grant execute on function public.has_role(uuid, public.app_role) to authenticated;
+grant execute on function public.is_course_rep_for(uuid, uuid, int) to authenticated;
+grant execute on function public.admin_delete_user(uuid) to authenticated;
 
 -- =====================================================================
 -- SEED (idempotent)
