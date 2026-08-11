@@ -401,7 +401,7 @@ export async function listPosts(opts: {
     return {
       id: p.id,
       authorId: p.author_id,
-      authorName: author?.full_name || "ASISA member",
+      authorName: author?.full_name || "Actuarial Science & Insurance Nexus member",
       authorAvatar: author?.avatar_url ?? undefined,
       scope: p.scope,
       scopeId: p.scope_id ?? undefined,
@@ -489,7 +489,7 @@ export async function listComments(postId: string): Promise<Comment[]> {
       id: c.id,
       postId: c.post_id,
       authorId: c.author_id,
-      authorName: author?.full_name || "ASISA member",
+      authorName: author?.full_name || "Actuarial Science & Insurance Nexus member",
       authorAvatar: author?.avatar_url ?? undefined,
       body: c.body,
       createdAt: c.created_at,

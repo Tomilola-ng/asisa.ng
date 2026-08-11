@@ -24,8 +24,8 @@ export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Sign in — ASISA" },
-      { name: "description", content: "Sign in or create your ASISA account." },
+      { title: "Sign in · Actuarial Science & Insurance Nexus" },
+      { name: "description", content: "Sign in or create your Actuarial Science & Insurance Nexus account." },
     ],
   }),
   component: AuthPage,
@@ -137,17 +137,17 @@ function AuthPage() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {showSetPassword
-              ? "You're almost done — enter a new password for your account."
+              ? "You're almost done. Enter a new password for your account."
               : showForgot
                 ? "Enter your email and we'll send you a reset link."
                 : mode === "signup"
                   ? "Register with your UNILAG student email."
-                  : "Sign in to your ASISA account."}
+                  : "Sign in to your Actuarial Science & Insurance Nexus account."}
           </p>
 
           {!supabaseEnabled && !showForgot && !showSetPassword && (
             <div className="mt-4 rounded-md border border-border bg-secondary/50 p-3 text-xs text-secondary-foreground">
-              Demo mode — Supabase env vars not set. Emails starting with{" "}
+              Demo mode: Supabase env vars not set. Emails starting with{" "}
               <code>admin@</code> log in as super admin, <code>rep@</code> as course rep.
             </div>
           )}

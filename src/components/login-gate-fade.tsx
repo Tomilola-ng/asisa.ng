@@ -34,7 +34,7 @@ export function LoginGateFade({
           />
           <p className="mt-4 max-w-md font-medium">{message}</p>
           <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">
-            Sign in or create a free ASISA account to continue.
+            Sign in or create a free Actuarial Science & Insurance Nexus account to continue.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-2">
             <Button asChild>

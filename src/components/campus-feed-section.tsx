@@ -3,7 +3,7 @@ import { LoginGateFade } from "@/components/login-gate-fade";
 import { useAuth } from "@/lib/auth-context";
 
 const TITLE = "Campus feed";
-const DESCRIPTION = "Announcements and discussion from ASISA members.";
+const DESCRIPTION = "Announcements and discussion from the Actuarial Science & Insurance Nexus community.";
 const LOGIN_MESSAGE = "You need to be logged in to access the campus feed.";
 
 interface CampusFeedSectionProps {

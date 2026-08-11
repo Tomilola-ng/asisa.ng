@@ -49,7 +49,7 @@ import { Plus, PencilSquare, ShieldCheck, Trash } from "react-bootstrap-icons";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/rep")({
-  head: () => ({ meta: [{ title: "Course rep dashboard — ASISA" }] }),
+  head: () => ({ meta: [{ title: "Course rep dashboard · Actuarial Science & Insurance Nexus" }] }),
   beforeLoad: () => requireAuthRedirect(),
   component: RepDashboard,
 });
@@ -145,8 +145,7 @@ function RepDashboard() {
   });
 
   const deptName = (id: string) => departments.find((d) => d.id === id)?.name ?? "Department";
-  const sessionLabel = (id?: string) =>
-    sessions.find((s) => s.id === id)?.label ?? null;
+  const sessionLabel = (id?: string) => sessions.find((s) => s.id === id)?.label ?? null;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -299,9 +298,7 @@ function CourseDialog({
     const currentSession = sessions.find((s) => s.isCurrent);
     setForm({
       ...editing,
-      ...(coursesHaveSession
-        ? { sessionId: editing.sessionId ?? currentSession?.id }
-        : {}),
+      ...(coursesHaveSession ? { sessionId: editing.sessionId ?? currentSession?.id } : {}),
     });
     onThumbFile(null);
     setAddSessionOpen(false);
@@ -402,7 +399,10 @@ function CourseDialog({
 
             <div className="space-y-1.5">
               <Label>Title</Label>
-              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+              <Input
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+              />
             </div>
 
             <div className="space-y-1.5">
@@ -555,7 +555,7 @@ function CourseDialog({
           <AlertDialogHeader>
             <AlertDialogTitle>New academic session</AlertDialogTitle>
             <AlertDialogDescription>
-              e.g. 2026/2027 — this will be available for all courses.
+              e.g. 2026/2027, this will be available for all courses.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Input

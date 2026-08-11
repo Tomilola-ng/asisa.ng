@@ -127,7 +127,7 @@ export function Feed({
     loginReason === "post"
       ? {
           title: "Sign in to post",
-          description: "Join ASISA to share updates, ask questions, and join the conversation.",
+          description: "Join Actuarial Science & Insurance Nexus to share updates, ask questions, and join the conversation.",
         }
       : loginReason === "interact"
         ? {

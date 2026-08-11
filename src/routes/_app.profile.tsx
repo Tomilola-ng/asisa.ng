@@ -21,7 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BoxArrowRight, Mortarboard, Person } from "react-bootstrap-icons";
 
 export const Route = createFileRoute("/_app/profile")({
-  head: () => ({ meta: [{ title: "Profile — ASISA" }] }),
+  head: () => ({ meta: [{ title: "Profile · Actuarial Science & Insurance Nexus" }] }),
   beforeLoad: () => requireAuthRedirect(),
   component: ProfilePage,
 });
@@ -125,8 +125,12 @@ function ProfilePage() {
       section === id
         ? "border-primary bg-primary/5 text-primary"
         : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
-      id === "logout" && section !== id && "text-destructive hover:border-destructive/40 hover:text-destructive",
-      id === "logout" && section === id && "border-destructive/50 bg-destructive/5 text-destructive",
+      id === "logout" &&
+        section !== id &&
+        "text-destructive hover:border-destructive/40 hover:text-destructive",
+      id === "logout" &&
+        section === id &&
+        "border-destructive/50 bg-destructive/5 text-destructive",
     );
 
   return (
@@ -159,7 +163,7 @@ function ProfilePage() {
               <div>
                 <h2 className="font-display text-lg font-semibold">General info</h2>
                 <p className="mt-0.5 text-sm text-muted-foreground">
-                  Your photo and display name on ASISA.
+                  Your photo and display name on Actuarial Science & Insurance Nexus.
                 </p>
               </div>
 
@@ -172,7 +176,7 @@ function ProfilePage() {
                 </Avatar>
                 <div className="w-full min-w-0 flex-1 space-y-1.5 text-center sm:text-left">
                   <p className="truncate font-display text-xl font-semibold">
-                    {user?.fullName || "ASISA member"}
+                    {user?.fullName || "Actuarial Science & Insurance Nexus member"}
                   </p>
                   <p className="truncate text-sm text-muted-foreground">{user?.email}</p>
                   <div className="pt-2">
@@ -255,7 +259,7 @@ function ProfilePage() {
                     <SelectContent>
                       {departments.map((d) => (
                         <SelectItem key={d.id} value={d.id}>
-                          {d.code} — {d.name}
+                          {d.code} - {d.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -280,7 +284,7 @@ function ProfilePage() {
               <div className="rounded-2xl border border-border bg-muted/20 px-5 py-6">
                 <p className="font-medium">Are you sure you want to log out?</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  You can sign back in anytime with your ASISA account.
+                  You can sign back in anytime with your Actuarial Science & Insurance Nexus account.
                 </p>
                 <div className="mt-5 flex flex-wrap gap-2">
                   <Button

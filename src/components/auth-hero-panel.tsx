@@ -1,9 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
+import { PLATFORM_NAME } from "@/lib/brand";
 
 function AuthLogo({ className = "h-10 w-10" }: { className?: string }) {
   return (
-    <img src="/asisa-logo.png" alt="ASISA" className={cn("rounded-md object-contain", className)} />
+    <img
+      src="/asisa-logo.png"
+      alt={PLATFORM_NAME}
+      className={cn("rounded-md object-contain", className)}
+    />
   );
 }
 
@@ -32,7 +37,7 @@ export function AuthHeroPanel({ className, compact = false }: AuthHeroPanelProps
         <Link to="/dashboard" className="flex items-center gap-2">
           <AuthLogo className={compact ? "h-9 w-9" : "h-10 w-10"} />
           <div className="leading-tight">
-            <div className="font-display font-semibold">ASISA</div>
+            <div className="font-display font-semibold">{PLATFORM_NAME}</div>
             <div className="text-xs opacity-80">UNILAG</div>
           </div>
         </Link>
@@ -44,12 +49,12 @@ export function AuthHeroPanel({ className, compact = false }: AuthHeroPanelProps
                 Your class, your coursework, your community.
               </h2>
               <p className="mt-4 max-w-md text-sm text-white/85">
-                Sign in with your student credentials to access course files, class feeds and ASISA
-                announcements.
+                Sign in with your student credentials to access course files, class feeds and
+                community announcements.
               </p>
             </div>
             <p className="text-xs text-white/65">
-              Department of Actuarial Science & Insurance, University of Lagos.
+              Actuarial Science & Insurance Nexus · University of Lagos
             </p>
           </>
         )}

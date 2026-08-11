@@ -53,9 +53,9 @@ export const DEMO_POSTS: Post[] = [
   {
     id: "demo-post-1",
     authorId: "demo-author",
-    authorName: "ASISA Rep",
+    authorName: "Actuarial Science & Insurance Nexus Rep",
     scope: "public",
-    body: "Welcome to the ASISA community hub — sign in to see announcements, ask questions, and connect with classmates.",
+    body: "Welcome to the Actuarial Science & Insurance Nexus. Sign in to see announcements, ask questions, and connect with classmates.",
     createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
     reactions: 12,
     comments: 4,

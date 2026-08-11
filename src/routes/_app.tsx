@@ -10,6 +10,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { PLATFORM_NAME, PLATFORM_NAME_LINES } from "@/lib/brand";
 import {
   Book,
   ChatSquareText,
@@ -99,10 +100,16 @@ function AppLayout() {
           <Link to="/dashboard" className="flex items-center gap-2 justify-self-start">
             <img
               src="/asisa-logo.png"
-              alt="ASISA"
-              className="h-8 w-8 rounded-md object-contain"
+              alt={PLATFORM_NAME}
+              className="h-8 w-8 shrink-0 rounded-md object-contain"
             />
-            <span className="font-display text-sm font-semibold">ASISA</span>
+            <span className="font-display text-xs font-semibold leading-tight">
+              {PLATFORM_NAME_LINES.map((line) => (
+                <span key={line} className="block">
+                  {line}
+                </span>
+              ))}
+            </span>
           </Link>
 
           <nav className="hidden items-center justify-center gap-0.5 sm:flex">

@@ -18,7 +18,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Search } from "react-bootstrap-icons";
 
 export const Route = createFileRoute("/_app/courses/")({
-  head: () => ({ meta: [{ title: "Courses — ASISA" }] }),
+  head: () => ({ meta: [{ title: "Courses · Actuarial Science & Insurance Nexus" }] }),
   component: CoursesIndex,
 });
 
@@ -51,7 +51,7 @@ function CoursesIndex() {
         <h1 className="font-display text-3xl font-semibold">Course directory</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {user
-            ? "Actuarial Science & Insurance — all levels and semesters."
+            ? "Actuarial Science & Insurance, all levels and semesters."
             : "Sign in to search and filter the full course directory."}
         </p>
       </div>
@@ -59,7 +59,10 @@ function CoursesIndex() {
       {user && (
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative min-w-[240px] flex-1">
-            <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Search
+              size={14}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -124,7 +127,7 @@ function CoursesIndex() {
         open={loginOpen}
         onOpenChange={setLoginOpen}
         title="Sign in to open this course"
-        description="Course materials, Drive files, and past questions are available to ASISA members after you log in."
+        description="Course materials, Drive files, and past questions are available after you log in."
       />
     </div>
   );

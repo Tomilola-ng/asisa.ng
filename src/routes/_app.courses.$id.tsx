@@ -7,7 +7,7 @@ import { requireAuthRedirect } from "@/lib/auth-guard";
 import { ArrowLeft, BoxArrowUpRight, FileEarmarkText, Folder2Open } from "react-bootstrap-icons";
 
 export const Route = createFileRoute("/_app/courses/$id")({
-  head: () => ({ meta: [{ title: "Course — ASISA" }] }),
+  head: () => ({ meta: [{ title: "Course · Actuarial Science & Insurance Nexus" }] }),
   beforeLoad: () => requireAuthRedirect(),
   component: CoursePage,
 });

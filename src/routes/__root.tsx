@@ -11,6 +11,8 @@ import { type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { AuthProvider } from "../lib/auth-context";
+import { BrandSplash } from "@/components/brand-splash";
+import { PLATFORM_NAME } from "@/lib/brand";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -75,13 +77,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "ASISA — Actuarial Science & Insurance, UNILAG" },
+      { title: PLATFORM_NAME },
       {
         name: "description",
         content:
           "Community platform for the Department of Actuarial Science and Insurance at the University of Lagos. Courses, feeds, groups and resources.",
       },
-      { property: "og:title", content: "ASISA — Actuarial Science & Insurance, UNILAG" },
+      { property: "og:title", content: PLATFORM_NAME },
       {
         property: "og:description",
         content:
@@ -122,6 +124,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <BrandSplash />
         <Outlet />
         <Toaster />
       </AuthProvider>

@@ -20,7 +20,7 @@ export function LoginPromptDialog({
   open,
   onOpenChange,
   title = "Sign in to continue",
-  description = "Create a free ASISA account or log in to access course materials, the full feed, and more.",
+  description = "Create a free Actuarial Science & Insurance Nexus account or log in to access course materials, the full feed, and more.",
 }: LoginPromptDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
