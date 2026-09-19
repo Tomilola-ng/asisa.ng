@@ -4,13 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { isQuizVisibleFor, useFeatureFlags } from "@/lib/use-feature-flags";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { PLATFORM_NAME, PLATFORM_NAME_LINES } from "@/lib/brand";
 import {
   Book,
@@ -70,8 +64,7 @@ function AppLayout() {
     ...(showQuiz ? [{ title: "Quiz", to: "/quiz", icon: PatchQuestion }] : []),
   ] as const;
 
-  const isActive = (to: string) =>
-    pathname === to || pathname.startsWith(`${to}/`);
+  const isActive = (to: string) => pathname === to || pathname.startsWith(`${to}/`);
 
   const navLinkClass = (to: string) =>
     `inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm transition-colors ${
@@ -140,13 +133,14 @@ function AppLayout() {
 
           <div className="flex items-center gap-2 justify-self-end">
             {user ? (
-              <Button asChild variant="ghost" size="sm" className="hidden gap-2 px-2 sm:inline-flex">
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="hidden gap-2 px-2 sm:inline-flex"
+              >
                 <Link to="/profile">
-                  <UserAvatar
-                    name={displayName}
-                    avatarUrl={user.avatarUrl}
-                    className="h-8 w-8"
-                  />
+                  <UserAvatar name={displayName} avatarUrl={user.avatarUrl} className="h-8 w-8" />
                   <span className="max-w-40 truncate">{displayName}</span>
                 </Link>
               </Button>
@@ -207,18 +201,10 @@ function AppLayout() {
                     </>
                   ) : (
                     <>
-                      <Link
-                        to="/auth"
-                        search={{ mode: "signin" }}
-                        className={mobileAuthLinkClass}
-                      >
+                      <Link to="/auth" search={{ mode: "signin" }} className={mobileAuthLinkClass}>
                         Log in
                       </Link>
-                      <Link
-                        to="/auth"
-                        search={{ mode: "signup" }}
-                        className={mobileAuthLinkClass}
-                      >
+                      <Link to="/auth" search={{ mode: "signup" }} className={mobileAuthLinkClass}>
                         Create account
                       </Link>
                     </>

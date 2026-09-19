@@ -67,8 +67,8 @@ function QuizHub() {
             <p className="text-sm text-white">Practice</p>
             <h1 className="mt-1 font-display text-3xl font-semibold text-white">Quiz</h1>
             <p className="mt-2 inline-flex items-center gap-2 text-sm text-white">
-              <PatchQuestion size={14} className="shrink-0 text-white" /> Auto-extracted
-              questions, published per course.
+              <PatchQuestion size={14} className="shrink-0 text-white" /> Auto-extracted questions,
+              published per course.
             </p>
           </div>
           {canPublish && (
@@ -181,7 +181,9 @@ function CreateQuizDialog({
       );
       const parsed = parseQuestionsFromText(text);
       if (parsed.length === 0) {
-        toast.error("Couldn't find any questions in that document. Try editing it and re-uploading.");
+        toast.error(
+          "Couldn't find any questions in that document. Try editing it and re-uploading.",
+        );
         return;
       }
       setFileName(file.name);
@@ -248,8 +250,8 @@ function CreateQuizDialog({
         {step === "upload" && (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Upload a document or a photo/scan of a question sheet. We'll extract the
-              questions (using OCR for images) so you can review before publishing.
+              Upload a document or a photo/scan of a question sheet. We'll extract the questions
+              (using OCR for images) so you can review before publishing.
             </p>
             <input
               ref={fileInputRef}
@@ -280,8 +282,8 @@ function CreateQuizDialog({
               This is a photo/scan with two columns (like an exam paper)
             </label>
             <p className="text-xs text-muted-foreground">
-              We try to detect columns automatically — check this if the scan came out jumbled
-              (text from both columns mixed on one line).
+              We try to detect columns automatically — check this if the scan came out jumbled (text
+              from both columns mixed on one line).
             </p>
           </div>
         )}

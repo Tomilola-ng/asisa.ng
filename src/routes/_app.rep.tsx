@@ -154,8 +154,8 @@ function RepDashboard() {
               Course rep dashboard
             </h1>
             <p className="mt-2 inline-flex items-center gap-2 text-sm text-white">
-              <ShieldCheck size={14} className="shrink-0 text-white" /> Upload materials and
-              Drive links for your level.
+              <ShieldCheck size={14} className="shrink-0 text-white" /> Upload materials and Drive
+              links for your level.
             </p>
           </div>
           <Button
@@ -323,8 +323,8 @@ function CourseDialog({
           </DialogHeader>
           <div className="grid gap-4">
             <p className="-mt-1 text-xs text-muted-foreground">
-              The course thumbnail is set automatically from this level's image — manage it in
-              Level images.
+              The course thumbnail is set automatically from this level's image — manage it in Level
+              images.
             </p>
 
             <div className="grid grid-cols-2 gap-3">

@@ -164,16 +164,14 @@ async function extractTextFromPdf(file: File): Promise<string> {
   for (let i = 1; i <= doc.numPages; i++) {
     const page = await doc.getPage(i);
     const content = await page.getTextContent();
-    const line = content.items
-      .map((item) => ("str" in item ? item.str : ""))
-      .join(" ");
+    const line = content.items.map((item) => ("str" in item ? item.str : "")).join(" ");
     pages.push(line);
   }
   return pages.join("\n");
 }
 
 const QUESTION_START = /^\s*(?:q(?:uestion)?\.?\s*)?(\d{1,3})[.)]\s+(.*)$/i;
-const ANSWER_LINE = /^\s*(?:answer|ans|correct)\s*[:\-]\s*\(?([A-Da-d])\)?/i;
+const ANSWER_LINE = /^\s*(?:answer|ans|correct)\s*[:-]\s*\(?([A-Da-d])\)?/i;
 // Matches every "A. ...", "B) ..." marker in a line, not just one — a
 // column-width OCR pass sometimes flattens several stacked options (or an
 // option plus the next question's number) onto a single text line.
@@ -187,7 +185,10 @@ function splitInlineOptions(line: string): { letter: string; text: string }[] {
     const m = matches[i];
     const start = m.index! + m[0].length;
     const end = i + 1 < matches.length ? matches[i + 1].index! : line.length;
-    const text = line.slice(start, end).trim().replace(/[,;]\s*$/, "");
+    const text = line
+      .slice(start, end)
+      .trim()
+      .replace(/[,;]\s*$/, "");
     if (text) out.push({ letter: m[1].toUpperCase(), text });
   }
   return out;
@@ -209,7 +210,11 @@ export function parseQuestionsFromText(text: string): QuizQuestion[] {
     .map((l) => l.trim())
     .filter(Boolean);
 
-  type Block = { prompt: string[]; options: { letter: string; text: string }[]; answerLetter?: string };
+  type Block = {
+    prompt: string[];
+    options: { letter: string; text: string }[];
+    answerLetter?: string;
+  };
   const blocks: Block[] = [];
   let current: Block | null = null;
 

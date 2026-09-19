@@ -1,5 +1,33 @@
 import { requireSupabase, supabaseEnabled } from "./supabase";
-import type { Quiz, QuizQuestion } from "./types";
+import type { Database } from "./database.types";
+import type { Quiz, QuizQuestion, QuestionType } from "./types";
+
+type QuizRow = Database["public"]["Tables"]["quizzes"]["Row"];
+type QuizQuestionRow = Database["public"]["Tables"]["quiz_questions"]["Row"];
+
+function mapQuizQuestion(row: QuizQuestionRow): QuizQuestion {
+  return {
+    id: row.id,
+    type: row.type as QuestionType,
+    prompt: row.prompt,
+    options: (row.options as string[] | null) ?? undefined,
+    correctIndex: row.correct_index ?? undefined,
+  };
+}
+
+function mapQuiz(row: QuizRow, questions: QuizQuestionRow[]): Quiz {
+  return {
+    id: row.id,
+    courseId: row.course_id,
+    title: row.title,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    questions: questions
+      .filter((q) => q.quiz_id === row.id)
+      .sort((a, b) => a.position - b.position)
+      .map(mapQuizQuestion),
+  };
+}
 
 const DEMO_QUIZZES_KEY = "asisa.demo.quizzes";
 
@@ -28,33 +56,22 @@ export async function listQuizzes(courseId?: string): Promise<Quiz[]> {
     return courseId ? all.filter((q) => q.courseId === courseId) : all;
   }
   const client = requireSupabase();
-  let query = (client as any)
-    .from("quizzes")
-    .select("*, quiz_questions(*)")
-    .order("created_at", { ascending: false });
+  let query = client.from("quizzes").select("*").order("created_at", { ascending: false });
   if (courseId) query = query.eq("course_id", courseId);
-  const { data, error } = await query;
+  const { data: quizzes, error } = await query;
   throwIfError(error);
-  return (data ?? []).map(
-    (row: any): Quiz => ({
-      id: row.id,
-      courseId: row.course_id,
-      title: row.title,
-      createdBy: row.created_by,
-      createdAt: row.created_at,
-      questions: (row.quiz_questions ?? [])
-        .sort((a: any, b: any) => a.position - b.position)
-        .map(
-          (q: any): QuizQuestion => ({
-            id: q.id,
-            type: q.type,
-            prompt: q.prompt,
-            options: q.options ?? undefined,
-            correctIndex: q.correct_index ?? undefined,
-          }),
-        ),
-    }),
-  );
+  if (!quizzes?.length) return [];
+
+  const { data: questions, error: questionsError } = await client
+    .from("quiz_questions")
+    .select("*")
+    .in(
+      "quiz_id",
+      quizzes.map((q) => q.id),
+    );
+  throwIfError(questionsError);
+
+  return quizzes.map((row) => mapQuiz(row, questions ?? []));
 }
 
 export async function getQuiz(id: string): Promise<Quiz | null> {
@@ -85,14 +102,15 @@ export async function createQuiz(input: {
   }
 
   const client = requireSupabase();
-  const { data: quizRow, error } = await (client as any)
+  const { data: quizRow, error } = await client
     .from("quizzes")
     .insert({ course_id: input.courseId, title: input.title, created_by: input.createdBy })
     .select("*")
     .single();
   throwIfError(error);
+  if (!quizRow) throw new Error("Failed to create quiz");
 
-  const { error: questionsError } = await (client as any).from("quiz_questions").insert(
+  const { error: questionsError } = await client.from("quiz_questions").insert(
     input.questions.map((q, index) => ({
       quiz_id: quizRow.id,
       position: index,
@@ -120,6 +138,6 @@ export async function deleteQuiz(id: string): Promise<void> {
     return;
   }
   const client = requireSupabase();
-  const { error } = await (client as any).from("quizzes").delete().eq("id", id);
+  const { error } = await client.from("quizzes").delete().eq("id", id);
   throwIfError(error);
 }

@@ -19,7 +19,10 @@ export const Route = createFileRoute("/_app/quiz/$id")({
 
 function TakeQuiz() {
   const { id } = Route.useParams();
-  const { data: quiz, isLoading } = useQuery({ queryKey: ["quiz", id], queryFn: () => getQuiz(id) });
+  const { data: quiz, isLoading } = useQuery({
+    queryKey: ["quiz", id],
+    queryFn: () => getQuiz(id),
+  });
   const { data: course } = useQuery({
     queryKey: ["course", quiz?.courseId],
     queryFn: () => getCourse(quiz!.courseId),
@@ -41,7 +44,9 @@ function TakeQuiz() {
     );
   }
 
-  const mcqQuestions = quiz.questions.filter((q) => q.type === "mcq" && q.correctIndex !== undefined);
+  const mcqQuestions = quiz.questions.filter(
+    (q) => q.type === "mcq" && q.correctIndex !== undefined,
+  );
   const score = submitted
     ? mcqQuestions.filter((q) => answers[q.id] === String(q.correctIndex)).length
     : null;
@@ -130,7 +135,10 @@ function TakeQuiz() {
 
 function BackLink() {
   return (
-    <Link to="/quiz" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+    <Link
+      to="/quiz"
+      className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+    >
       <ArrowLeft size={14} /> All quizzes
     </Link>
   );

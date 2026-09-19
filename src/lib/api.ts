@@ -1,4 +1,5 @@
 import { requireSupabase, publicUrl, supabase, supabaseEnabled } from "./supabase";
+import type { Database } from "./database.types";
 import {
   DEFAULT_FEATURE_FLAGS,
   DEMO_COURSES,
@@ -31,8 +32,7 @@ function throwIfError(error: { message: string } | null) {
 }
 
 /** Set VITE_COURSES_HAVE_SESSION=true in .env after running add-course-session-id.sql */
-export const coursesHaveSession =
-  import.meta.env.VITE_COURSES_HAVE_SESSION === "true";
+export const coursesHaveSession = import.meta.env.VITE_COURSES_HAVE_SESSION === "true";
 
 function must<T>(data: T | null, message = "Unexpected empty response"): T {
   if (data == null) throw new Error(message);
@@ -122,11 +122,7 @@ export async function listSessions(): Promise<AcademicSession[]> {
 export async function listCourses(): Promise<Course[]> {
   if (!supabaseEnabled) return DEMO_COURSES;
   const client = requireSupabase();
-  const { data, error } = await client
-    .from("courses")
-    .select("*")
-    .order("level")
-    .order("code");
+  const { data, error } = await client.from("courses").select("*").order("level").order("code");
   throwIfError(error);
   return (data ?? []).map(mapCourse);
 }
@@ -246,9 +242,7 @@ export async function uploadCourseThumbnail(
 export async function listLevelImages(): Promise<LevelImage[]> {
   if (!supabaseEnabled) return readDemoLevelImages();
   const client = requireSupabase();
-  // `level_images` is added via supabase/patches/level-images-and-quizzes.sql
-  // and isn't in the generated Database type yet.
-  const { data, error } = await (client as any).from("level_images").select("*");
+  const { data, error } = await client.from("level_images").select("*");
   throwIfError(error);
   return (data ?? []).map((row) => ({
     level: row.level as Level,
@@ -269,7 +263,7 @@ export async function setLevelImage(level: Level, file: File): Promise<LevelImag
     .upload(path, file, { contentType: file.type || "image/jpeg", upsert: true });
   if (uploadError) throw new Error(`Level image upload failed: ${uploadError.message}`);
 
-  const { error } = await (client as any)
+  const { error } = await client
     .from("level_images")
     .upsert({ level, image_path: path }, { onConflict: "level" });
   throwIfError(error);
@@ -283,7 +277,7 @@ export async function setLevelImage(level: Level, file: File): Promise<LevelImag
 export async function getFeatureFlags(): Promise<FeatureFlags> {
   if (!supabaseEnabled) return readDemoFeatureFlags();
   const client = requireSupabase();
-  const { data, error } = await (client as any)
+  const { data, error } = await client
     .from("app_settings")
     .select("*")
     .eq("id", "feature_flags")
@@ -300,16 +294,14 @@ export async function getFeatureFlags(): Promise<FeatureFlags> {
 export async function setFeatureFlags(patch: Partial<FeatureFlags>): Promise<FeatureFlags> {
   if (!supabaseEnabled) return writeDemoFeatureFlags(patch);
   const client = requireSupabase();
-  const row: Record<string, unknown> = { id: "feature_flags" };
+  const row: Database["public"]["Tables"]["app_settings"]["Insert"] = { id: "feature_flags" };
   if (patch.quizVisibleToCourseReps !== undefined) {
     row.quiz_visible_to_course_reps = patch.quizVisibleToCourseReps;
   }
   if (patch.quizVisibleToStudents !== undefined) {
     row.quiz_visible_to_students = patch.quizVisibleToStudents;
   }
-  const { error } = await (client as any)
-    .from("app_settings")
-    .upsert(row, { onConflict: "id" });
+  const { error } = await client.from("app_settings").upsert(row, { onConflict: "id" });
   throwIfError(error);
   return getFeatureFlags();
 }

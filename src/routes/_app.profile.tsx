@@ -295,7 +295,8 @@ function ProfilePage() {
               <div className="rounded-2xl border border-border bg-muted/20 px-5 py-6">
                 <p className="font-medium">Are you sure you want to log out?</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  You can sign back in anytime with your Actuarial Science & Insurance Nexus account.
+                  You can sign back in anytime with your Actuarial Science & Insurance Nexus
+                  account.
                 </p>
                 <div className="mt-5 flex flex-wrap gap-2">
                   <Button

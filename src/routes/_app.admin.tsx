@@ -29,12 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -173,11 +168,7 @@ function AdminDashboard() {
   });
 
   const addRoleMutation = useMutation({
-    mutationFn: (input: {
-      role: Role;
-      departmentId?: string | null;
-      level?: number | null;
-    }) =>
+    mutationFn: (input: { role: Role; departmentId?: string | null; level?: number | null }) =>
       assignRole({
         userId: selectedUser!.id,
         role: input.role,
@@ -279,10 +270,7 @@ function AdminDashboard() {
         <CardContent className="space-y-4">
           <ul className="divide-y divide-border rounded-lg border border-border">
             {departments.map((d) => (
-              <li
-                key={d.id}
-                className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
-              >
+              <li key={d.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
                 <div className="min-w-0">
                   <div className="font-medium">{d.name}</div>
                   <div className="text-xs text-muted-foreground">{d.code}</div>
@@ -329,7 +317,9 @@ function AdminDashboard() {
               onChange={(e) => setDeptForm({ ...deptForm, name: e.target.value })}
             />
             <Button
-              disabled={!deptForm.code.trim() || !deptForm.name.trim() || deptCreateMutation.isPending}
+              disabled={
+                !deptForm.code.trim() || !deptForm.name.trim() || deptCreateMutation.isPending
+              }
               onClick={() => deptCreateMutation.mutate()}
             >
               Add
@@ -343,46 +333,46 @@ function AdminDashboard() {
           <CardTitle>Users</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-            <div className="relative">
-              <Search
-                size={14}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              />
-              <Input
-                value={userSearch}
-                onChange={(e) => setUserSearch(e.target.value)}
-                placeholder="Search by name, email, or matric"
-                className="pl-9"
-              />
-            </div>
-            <ul className="max-h-[420px] divide-y divide-border overflow-y-auto rounded-lg border border-border">
-              {filteredUsers.map((u) => (
-                <li key={u.id}>
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-muted/60"
-                    onClick={() => setSelectedUser(u)}
-                  >
-                    <div className="min-w-0">
-                      <div className="truncate font-medium">{u.fullName || u.email || "Unnamed"}</div>
-                      <div className="truncate text-xs text-muted-foreground">
-                        {u.email}
-                        {u.matricNumber ? ` · ${u.matricNumber}` : ""}
-                        {u.level ? ` · ${u.level}L` : ""}
-                      </div>
+          <div className="relative">
+            <Search
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              placeholder="Search by name, email, or matric"
+              className="pl-9"
+            />
+          </div>
+          <ul className="max-h-[420px] divide-y divide-border overflow-y-auto rounded-lg border border-border">
+            {filteredUsers.map((u) => (
+              <li key={u.id}>
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-muted/60"
+                  onClick={() => setSelectedUser(u)}
+                >
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">{u.fullName || u.email || "Unnamed"}</div>
+                    <div className="truncate text-xs text-muted-foreground">
+                      {u.email}
+                      {u.matricNumber ? ` · ${u.matricNumber}` : ""}
+                      {u.level ? ` · ${u.level}L` : ""}
                     </div>
-                    <Badge variant="secondary">{primaryRoleLabel(u)}</Badge>
-                  </button>
-                </li>
-              ))}
-              {filteredUsers.length === 0 && (
-                <li className="px-4 py-6 text-center text-sm text-muted-foreground">
-                  No users match your search.
-                </li>
-              )}
-            </ul>
-          </CardContent>
-        </Card>
+                  </div>
+                  <Badge variant="secondary">{primaryRoleLabel(u)}</Badge>
+                </button>
+              </li>
+            ))}
+            {filteredUsers.length === 0 && (
+              <li className="px-4 py-6 text-center text-sm text-muted-foreground">
+                No users match your search.
+              </li>
+            )}
+          </ul>
+        </CardContent>
+      </Card>
 
       <Sheet open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-md">
@@ -465,7 +455,9 @@ function AdminDashboard() {
                           <div>
                             <Badge variant="secondary">{r.role.replace("_", " ")}</Badge>
                             {dept ? (
-                              <span className="ml-2 text-xs text-muted-foreground">{dept.name}</span>
+                              <span className="ml-2 text-xs text-muted-foreground">
+                                {dept.name}
+                              </span>
                             ) : null}
                             {r.level ? (
                               <span className="ml-1 text-xs text-muted-foreground">{r.level}L</span>
@@ -647,9 +639,7 @@ function AdminDashboard() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() =>
-                deleteUserTarget && deleteUserMutation.mutate(deleteUserTarget.id)
-              }
+              onClick={() => deleteUserTarget && deleteUserMutation.mutate(deleteUserTarget.id)}
             >
               Delete user
             </AlertDialogAction>

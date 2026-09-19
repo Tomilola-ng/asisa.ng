@@ -15,7 +15,11 @@ export const Route = createFileRoute("/_app/courses/$id")({
 
 function CoursePage() {
   const { id } = Route.useParams();
-  const { data: course, isLoading, isError } = useQuery({
+  const {
+    data: course,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["course", id],
     queryFn: () => getCourse(id),
   });
@@ -28,7 +32,10 @@ function CoursePage() {
   if (isError || !course) {
     return (
       <div className="space-y-4">
-        <Link to="/courses" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+        <Link
+          to="/courses"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft size={14} /> All courses
         </Link>
         <p className="text-sm text-muted-foreground">Course not found.</p>
@@ -40,7 +47,10 @@ function CoursePage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <Link to="/courses" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+      <Link
+        to="/courses"
+        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft size={14} /> All courses
       </Link>
 
