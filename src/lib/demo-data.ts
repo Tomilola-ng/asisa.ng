@@ -1,6 +1,7 @@
 import type { Course, Post } from "./types";
 
 const ASI_DEPT = "d-asi";
+const FIN_DEPT = "d-fin";
 
 export const DEMO_COURSES: Course[] = [
   {
@@ -10,6 +11,7 @@ export const DEMO_COURSES: Course[] = [
     description:
       "Introduction to life tables, survival models, and single-life annuities and assurances.",
     departmentId: ASI_DEPT,
+    departmentIds: [ASI_DEPT],
     level: 300,
     semester: 1,
     units: 3,
@@ -22,6 +24,7 @@ export const DEMO_COURSES: Course[] = [
     description:
       "Individual and collective risk models, ruin theory, and premium calculation principles.",
     departmentId: ASI_DEPT,
+    departmentIds: [ASI_DEPT, FIN_DEPT],
     level: 300,
     semester: 2,
     units: 3,
@@ -33,6 +36,7 @@ export const DEMO_COURSES: Course[] = [
     description:
       "Structures of proportional and non-proportional reinsurance and their financial impact.",
     departmentId: ASI_DEPT,
+    departmentIds: [ASI_DEPT],
     level: 400,
     semester: 1,
     units: 2,
@@ -43,6 +47,7 @@ export const DEMO_COURSES: Course[] = [
     title: "Financial Mathematics",
     description: "Interest theory, annuities-certain, and loan schedules.",
     departmentId: ASI_DEPT,
+    departmentIds: [ASI_DEPT, FIN_DEPT],
     level: 200,
     semester: 1,
     units: 3,

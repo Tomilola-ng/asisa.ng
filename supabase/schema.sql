@@ -96,6 +96,17 @@ create table if not exists public.courses (
 );
 create index if not exists courses_dept_level_idx on public.courses(department_id, level, semester);
 
+-- A course can belong to multiple departments (shared offerings).
+-- courses.department_id remains the primary / home department.
+create table if not exists public.course_departments (
+  course_id      uuid not null references public.courses(id) on delete cascade,
+  department_id  uuid not null references public.departments(id) on delete cascade,
+  created_at     timestamptz not null default now(),
+  primary key (course_id, department_id)
+);
+create index if not exists course_departments_dept_idx
+  on public.course_departments(department_id);
+
 -- ---------- GROUPS ---------------------------------------------------
 create table if not exists public.groups (
   id           uuid primary key default gen_random_uuid(),
@@ -260,6 +271,10 @@ grant select on public.courses to anon, authenticated;
 grant insert, update, delete on public.courses to authenticated;
 grant all    on public.courses to service_role;
 
+grant select on public.course_departments to anon, authenticated;
+grant insert, update, delete on public.course_departments to authenticated;
+grant all    on public.course_departments to service_role;
+
 grant select, insert, update, delete on public.groups        to authenticated;
 grant all                            on public.groups        to service_role;
 grant select, insert, delete         on public.group_members to authenticated;
@@ -280,6 +295,7 @@ alter table public.sessions      enable row level security;
 alter table public.profiles      enable row level security;
 alter table public.user_roles    enable row level security;
 alter table public.courses       enable row level security;
+alter table public.course_departments enable row level security;
 alter table public.groups        enable row level security;
 alter table public.group_members enable row level security;
 alter table public.posts         enable row level security;
@@ -323,7 +339,8 @@ create policy "roles admin write" on public.user_roles
   using (public.has_role(auth.uid(), 'super_admin'))
   with check (public.has_role(auth.uid(), 'super_admin'));
 
--- Courses: publicly readable; writable by super_admin OR the scoped rep.
+-- Courses: publicly readable; writable by super_admin OR the scoped rep
+-- (primary department or any linked department via course_departments).
 create policy "courses readable" on public.courses
   for select using (true);
 create policy "courses rep write" on public.courses
@@ -331,10 +348,47 @@ create policy "courses rep write" on public.courses
   using (
     public.has_role(auth.uid(), 'super_admin')
     or public.is_course_rep_for(auth.uid(), department_id, level)
+    or exists (
+      select 1 from public.course_departments cd
+      where cd.course_id = courses.id
+        and public.is_course_rep_for(auth.uid(), cd.department_id, courses.level)
+    )
   )
   with check (
     public.has_role(auth.uid(), 'super_admin')
     or public.is_course_rep_for(auth.uid(), department_id, level)
+    or exists (
+      select 1 from public.course_departments cd
+      where cd.course_id = courses.id
+        and public.is_course_rep_for(auth.uid(), cd.department_id, courses.level)
+    )
+  );
+
+create policy "course_departments readable" on public.course_departments
+  for select using (true);
+create policy "course_departments write" on public.course_departments
+  for all to authenticated
+  using (
+    public.has_role(auth.uid(), 'super_admin')
+    or exists (
+      select 1 from public.courses c
+      where c.id = course_id
+        and (
+          public.is_course_rep_for(auth.uid(), c.department_id, c.level)
+          or public.is_course_rep_for(auth.uid(), department_id, c.level)
+        )
+    )
+  )
+  with check (
+    public.has_role(auth.uid(), 'super_admin')
+    or exists (
+      select 1 from public.courses c
+      where c.id = course_id
+        and (
+          public.is_course_rep_for(auth.uid(), c.department_id, c.level)
+          or public.is_course_rep_for(auth.uid(), department_id, c.level)
+        )
+    )
   );
 
 -- Groups: any authenticated user can list; private groups only readable
@@ -559,6 +613,10 @@ cross join (
 ) as v(code, title, description, level, semester, units, drive_folder_url)
 where d.code = 'ASI'
 on conflict (department_id, code) do nothing;
+
+insert into public.course_departments (course_id, department_id)
+select c.id, c.department_id from public.courses c
+on conflict do nothing;
 
 -- =====================================================================
 -- END

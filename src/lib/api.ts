@@ -24,9 +24,32 @@ function throwIfError(error: { message: string } | null) {
 export const coursesHaveSession =
   import.meta.env.VITE_COURSES_HAVE_SESSION === "true";
 
+/** Set VITE_COURSES_MULTI_DEPT=true after running course-departments-many-to-many.sql */
+export const coursesMultiDept =
+  import.meta.env.VITE_COURSES_MULTI_DEPT === "true";
+
 function must<T>(data: T | null, message = "Unexpected empty response"): T {
   if (data == null) throw new Error(message);
   return data;
+}
+
+type CourseDeptLink = { department_id: string };
+
+function normalizeDepartmentIds(
+  primaryId: string,
+  links?: CourseDeptLink[] | null,
+  explicit?: string[],
+): string[] {
+  if (explicit && explicit.length > 0) {
+    const unique = [...new Set(explicit.filter(Boolean))];
+    if (!unique.includes(primaryId)) unique.unshift(primaryId);
+    return unique;
+  }
+  const fromLinks = (links ?? []).map((l) => l.department_id).filter(Boolean);
+  if (fromLinks.length === 0) return [primaryId];
+  const unique = [...new Set(fromLinks)];
+  if (!unique.includes(primaryId)) unique.unshift(primaryId);
+  return unique;
 }
 
 function mapCourse(row: {
@@ -43,12 +66,15 @@ function mapCourse(row: {
   past_questions_url: string | null;
   representative_id: string | null;
   session_id: string | null;
+  course_departments?: CourseDeptLink[] | null;
 }): Course {
+  const departmentIds = normalizeDepartmentIds(row.department_id, row.course_departments);
   return {
     id: row.id,
     code: row.code,
     title: row.title,
     departmentId: row.department_id,
+    departmentIds,
     level: row.level as Level,
     semester: row.semester as Semester,
     units: row.units,
@@ -60,6 +86,13 @@ function mapCourse(row: {
     representativeId: row.representative_id ?? undefined,
     sessionId: row.session_id ?? undefined,
   };
+}
+
+/** True if the course is offered in the given department. */
+export function courseInDepartment(course: Course, departmentId: string | undefined | null): boolean {
+  if (!departmentId) return true;
+  const ids = course.departmentIds?.length ? course.departmentIds : [course.departmentId];
+  return ids.includes(departmentId);
 }
 
 export async function fetchAsisaUser(userId: string, email: string): Promise<AsisaUser> {
@@ -112,13 +145,22 @@ export async function listSessions(): Promise<AcademicSession[]> {
 export async function listCourses(): Promise<Course[]> {
   if (!supabaseEnabled) return DEMO_COURSES;
   const client = requireSupabase();
+  if (coursesMultiDept) {
+    const { data, error } = await client
+      .from("courses")
+      .select("*, course_departments(department_id)")
+      .order("level")
+      .order("code");
+    throwIfError(error);
+    return (data ?? []).map((row) => mapCourse(row as unknown as Parameters<typeof mapCourse>[0]));
+  }
   const { data, error } = await client
     .from("courses")
     .select("*")
     .order("level")
     .order("code");
   throwIfError(error);
-  return (data ?? []).map(mapCourse);
+  return (data ?? []).map((row) => mapCourse(row as unknown as Parameters<typeof mapCourse>[0]));
 }
 
 export async function getCourse(id: string): Promise<Course | null> {
@@ -126,20 +168,53 @@ export async function getCourse(id: string): Promise<Course | null> {
     return DEMO_COURSES.find((c) => c.id === id) ?? null;
   }
   const client = requireSupabase();
+  if (coursesMultiDept) {
+    const { data, error } = await client
+      .from("courses")
+      .select("*, course_departments(department_id)")
+      .eq("id", id)
+      .maybeSingle();
+    throwIfError(error);
+    return data ? mapCourse(data as unknown as Parameters<typeof mapCourse>[0]) : null;
+  }
   const { data, error } = await client.from("courses").select("*").eq("id", id).maybeSingle();
   throwIfError(error);
-  return data ? mapCourse(data) : null;
+  return data ? mapCourse(data as unknown as Parameters<typeof mapCourse>[0]) : null;
+}
+
+function resolveDepartmentIds(
+  course: Omit<Course, "thumbnailUrl" | "id"> & { id?: string },
+): string[] {
+  const primary = course.departmentId;
+  const ids = normalizeDepartmentIds(primary, null, course.departmentIds);
+  return ids.length > 0 ? ids : primary ? [primary] : [];
 }
 
 function courseRowPayload(
   course: Omit<Course, "thumbnailUrl" | "id"> & { id?: string },
   userId?: string,
 ) {
-  const row: Record<string, unknown> = {
+  const departmentIds = resolveDepartmentIds(course);
+  const primaryId = departmentIds[0] ?? course.departmentId;
+  const row: {
+    code: string;
+    title: string;
+    description: string;
+    department_id: string;
+    level: number;
+    semester: number;
+    units: number;
+    drive_folder_url: string | null;
+    past_questions_url: string | null;
+    thumbnail_path: string | null;
+    representative_id: string | null;
+    session_id?: string | null;
+    created_by?: string;
+  } = {
     code: course.code,
     title: course.title,
     description: course.description,
-    department_id: course.departmentId,
+    department_id: primaryId,
     level: course.level,
     semester: course.semester,
     units: course.units,
@@ -156,32 +231,65 @@ function courseRowPayload(
   return row;
 }
 
+async function syncCourseDepartments(courseId: string, departmentIds: string[]): Promise<void> {
+  if (!coursesMultiDept) return;
+  const client = requireSupabase();
+  const unique = [...new Set(departmentIds.filter(Boolean))];
+  if (unique.length === 0) return;
+
+  const { error: delError } = await client
+    .from("course_departments")
+    .delete()
+    .eq("course_id", courseId);
+  throwIfError(delError);
+
+  const { error: insError } = await client.from("course_departments").insert(
+    unique.map((department_id) => ({ course_id: courseId, department_id })),
+  );
+  throwIfError(insError);
+}
+
 export async function upsertCourse(
   course: Omit<Course, "thumbnailUrl" | "id"> & { id?: string },
   userId: string,
 ): Promise<Course> {
   const client = requireSupabase();
-  if (course.id) {
+  const departmentIds = resolveDepartmentIds(course);
+  const payload = {
+    ...course,
+    departmentId: departmentIds[0] ?? course.departmentId,
+    departmentIds,
+  };
+
+  if (payload.id) {
     const { data, error } = await client
       .from("courses")
       .update({
-        ...courseRowPayload(course),
+        ...courseRowPayload(payload),
         updated_at: new Date().toISOString(),
       })
-      .eq("id", course.id)
+      .eq("id", payload.id)
       .select("*")
       .single();
     throwIfError(error);
-    return mapCourse(must(data));
+    await syncCourseDepartments(must(data).id, departmentIds);
+    return mapCourse({
+      ...(must(data) as Parameters<typeof mapCourse>[0]),
+      course_departments: departmentIds.map((department_id) => ({ department_id })),
+    });
   }
 
   const { data, error } = await client
     .from("courses")
-    .insert(courseRowPayload(course, userId))
+    .insert(courseRowPayload(payload, userId))
     .select("*")
     .single();
   throwIfError(error);
-  return mapCourse(must(data));
+  await syncCourseDepartments(must(data).id, departmentIds);
+  return mapCourse({
+    ...(must(data) as Parameters<typeof mapCourse>[0]),
+    course_departments: departmentIds.map((department_id) => ({ department_id })),
+  });
 }
 
 export async function deleteCourse(courseId: string): Promise<void> {

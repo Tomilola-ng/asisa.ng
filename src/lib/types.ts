@@ -20,7 +20,10 @@ export interface Course {
   id: string;
   code: string;
   title: string;
+  /** Primary / home department (also first entry in departmentIds). */
   departmentId: string;
+  /** All departments this course belongs to (many-to-many). */
+  departmentIds: string[];
   level: Level;
   semester: Semester;
   units: number;
