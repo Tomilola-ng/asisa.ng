@@ -77,6 +77,36 @@ export interface Group {
 export const LEVELS = [100, 200, 300, 400, 500] as const;
 export const SEMESTERS = [1, 2] as const;
 
+export interface LevelImage {
+  level: Level;
+  imageUrl?: string;
+  imagePath?: string;
+}
+
+export type QuestionType = "mcq" | "short";
+
+export interface QuizQuestion {
+  id: string;
+  type: QuestionType;
+  prompt: string;
+  options?: string[];
+  correctIndex?: number;
+}
+
+export interface Quiz {
+  id: string;
+  courseId: string;
+  title: string;
+  createdBy: string;
+  createdAt: string;
+  questions: QuizQuestion[];
+}
+
+export interface FeatureFlags {
+  quizVisibleToCourseReps: boolean;
+  quizVisibleToStudents: boolean;
+}
+
 export interface AdminUser {
   id: string;
   fullName: string;

@@ -9,6 +9,27 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          id: string;
+          quiz_visible_to_course_reps: boolean;
+          quiz_visible_to_students: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          quiz_visible_to_course_reps?: boolean;
+          quiz_visible_to_students?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          quiz_visible_to_course_reps?: boolean;
+          quiz_visible_to_students?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       comments: {
         Row: {
           author_id: string;
@@ -147,6 +168,24 @@ export type Database = {
         };
         Relationships: [];
       };
+      level_images: {
+        Row: {
+          image_path: string;
+          level: number;
+          updated_at: string;
+        };
+        Insert: {
+          image_path: string;
+          level: number;
+          updated_at?: string;
+        };
+        Update: {
+          image_path?: string;
+          level?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       groups: {
         Row: {
           created_at: string;
@@ -249,6 +288,60 @@ export type Database = {
           level?: number | null;
           matric_number?: string | null;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      quiz_questions: {
+        Row: {
+          correct_index: number | null;
+          id: string;
+          options: Json | null;
+          position: number;
+          prompt: string;
+          quiz_id: string;
+          type: string;
+        };
+        Insert: {
+          correct_index?: number | null;
+          id?: string;
+          options?: Json | null;
+          position?: number;
+          prompt: string;
+          quiz_id: string;
+          type: string;
+        };
+        Update: {
+          correct_index?: number | null;
+          id?: string;
+          options?: Json | null;
+          position?: number;
+          prompt?: string;
+          quiz_id?: string;
+          type?: string;
+        };
+        Relationships: [];
+      };
+      quizzes: {
+        Row: {
+          course_id: string;
+          created_at: string;
+          created_by: string;
+          id: string;
+          title: string;
+        };
+        Insert: {
+          course_id: string;
+          created_at?: string;
+          created_by: string;
+          id?: string;
+          title: string;
+        };
+        Update: {
+          course_id?: string;
+          created_at?: string;
+          created_by?: string;
+          id?: string;
+          title?: string;
         };
         Relationships: [];
       };

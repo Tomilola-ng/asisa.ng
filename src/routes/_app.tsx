@@ -1,20 +1,16 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { isQuizVisibleFor, useFeatureFlags } from "@/lib/use-feature-flags";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { PLATFORM_NAME, PLATFORM_NAME_LINES } from "@/lib/brand";
 import {
   Book,
   ChatSquareText,
   List,
+  PatchQuestion,
   ShieldLock,
   PersonBadge,
 } from "react-bootstrap-icons";
@@ -53,6 +49,7 @@ function UserAvatar({
 
 function AppLayout() {
   const { user, loading } = useAuth();
+  const { flags } = useFeatureFlags();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -60,13 +57,14 @@ function AppLayout() {
     setMenuOpen(false);
   }, [pathname]);
 
+  const showQuiz = isQuizVisibleFor(user?.role, flags);
   const nav = [
     { title: "Courses", to: "/courses", icon: Book },
     { title: "Feed", to: "/feed", icon: ChatSquareText },
+    ...(showQuiz ? [{ title: "Quiz", to: "/quiz", icon: PatchQuestion }] : []),
   ] as const;
 
-  const isActive = (to: string) =>
-    pathname === to || pathname.startsWith(`${to}/`);
+  const isActive = (to: string) => pathname === to || pathname.startsWith(`${to}/`);
 
   const navLinkClass = (to: string) =>
     `inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm transition-colors ${
@@ -135,13 +133,14 @@ function AppLayout() {
 
           <div className="flex items-center gap-2 justify-self-end">
             {user ? (
-              <Button asChild variant="ghost" size="sm" className="hidden gap-2 px-2 sm:inline-flex">
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="hidden gap-2 px-2 sm:inline-flex"
+              >
                 <Link to="/profile">
-                  <UserAvatar
-                    name={displayName}
-                    avatarUrl={user.avatarUrl}
-                    className="h-8 w-8"
-                  />
+                  <UserAvatar name={displayName} avatarUrl={user.avatarUrl} className="h-8 w-8" />
                   <span className="max-w-40 truncate">{displayName}</span>
                 </Link>
               </Button>
@@ -202,18 +201,10 @@ function AppLayout() {
                     </>
                   ) : (
                     <>
-                      <Link
-                        to="/auth"
-                        search={{ mode: "signin" }}
-                        className={mobileAuthLinkClass}
-                      >
+                      <Link to="/auth" search={{ mode: "signin" }} className={mobileAuthLinkClass}>
                         Log in
                       </Link>
-                      <Link
-                        to="/auth"
-                        search={{ mode: "signup" }}
-                        className={mobileAuthLinkClass}
-                      >
+                      <Link to="/auth" search={{ mode: "signup" }} className={mobileAuthLinkClass}>
                         Create account
                       </Link>
                     </>
