@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { LEVELS, SEMESTERS } from "@/lib/data";
 import type { Course } from "@/lib/data";
 import {
+  courseInDepartment,
   coursesHaveSession,
   deleteCourse,
   findOrCreateSession,
@@ -18,6 +19,7 @@ import { courseThumbnail, useLevelImages } from "@/lib/use-level-images";
 import { LevelImagesManager } from "@/components/level-images-manager";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -61,6 +63,7 @@ function emptyCourse(departmentId: string, level: Course["level"]): Course {
     code: "",
     title: "",
     departmentId,
+    departmentIds: departmentId ? [departmentId] : [],
     level,
     semester: 1,
     units: 3,
@@ -105,17 +108,29 @@ function RepDashboard() {
   const mine = courses.filter(
     (c) =>
       user?.role === "super_admin" ||
-      (c.departmentId === scopedDept && (!scopedLevel || c.level === scopedLevel)),
+      (courseInDepartment(c, scopedDept) && (!scopedLevel || c.level === scopedLevel)),
   );
 
   const saveMutation = useMutation({
     mutationFn: async (course: Course) => {
       if (!user) throw new Error("Not signed in");
+      const departmentIds =
+        course.departmentIds?.length > 0
+          ? course.departmentIds
+          : course.departmentId
+            ? [course.departmentId]
+            : scopedDept
+              ? [scopedDept]
+              : departments[0]?.id
+                ? [departments[0].id]
+                : [];
+      if (departmentIds.length === 0) throw new Error("Select at least one department");
       const saved = await upsertCourse(
         {
           ...course,
           id: course.id || undefined,
-          departmentId: course.departmentId || scopedDept || departments[0]?.id || "",
+          departmentId: departmentIds[0],
+          departmentIds,
         },
         user.id,
       );
@@ -142,6 +157,10 @@ function RepDashboard() {
   });
 
   const deptName = (id: string) => departments.find((d) => d.id === id)?.name ?? "Department";
+  const deptNames = (c: Course) => {
+    const ids = c.departmentIds?.length ? c.departmentIds : [c.departmentId];
+    return ids.map(deptName).join(", ");
+  };
   const sessionLabel = (id?: string) => sessions.find((s) => s.id === id)?.label ?? null;
 
   return (
@@ -196,7 +215,7 @@ function RepDashboard() {
             <CardContent className="space-y-3">
               <p className="line-clamp-2 text-xs text-muted-foreground">{c.description}</p>
               <div className="text-xs text-muted-foreground">
-                {deptName(c.departmentId)} · {c.level} Level · Semester {c.semester}
+                {deptNames(c)} · {c.level} Level · Semester {c.semester}
               </div>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={() => setEditing(c)}>
@@ -287,8 +306,16 @@ function CourseDialog({
       return;
     }
     const currentSession = sessions.find((s) => s.isCurrent);
+    const departmentIds =
+      editing.departmentIds?.length > 0
+        ? editing.departmentIds
+        : editing.departmentId
+          ? [editing.departmentId]
+          : [];
     setForm({
       ...editing,
+      departmentIds,
+      departmentId: departmentIds[0] ?? editing.departmentId,
       ...(coursesHaveSession ? { sessionId: editing.sessionId ?? currentSession?.id } : {}),
     });
     setAddSessionOpen(false);
@@ -308,9 +335,29 @@ function CourseDialog({
     onError: (err: Error) => toast.error(err.message),
   });
 
-  const departmentName =
-    departments.find((d) => d.id === form?.departmentId)?.name ?? "Select department";
+  const selectedDeptIds = form?.departmentIds?.length
+    ? form.departmentIds
+    : form?.departmentId
+      ? [form.departmentId]
+      : [];
   const sessionValue = form?.sessionId ?? sessions.find((s) => s.isCurrent)?.id ?? "";
+
+  function toggleDepartment(deptId: string, checked: boolean) {
+    if (!form) return;
+    const current = selectedDeptIds;
+    const next = checked
+      ? [...new Set([...current, deptId])]
+      : current.filter((id) => id !== deptId);
+    if (next.length === 0) {
+      toast.error("Select at least one department");
+      return;
+    }
+    setForm({
+      ...form,
+      departmentIds: next,
+      departmentId: next[0],
+    });
+  }
 
   if (!form) return null;
 
@@ -354,22 +401,31 @@ function CourseDialog({
             </div>
 
             <div className="space-y-1.5">
-              <Label>Department</Label>
-              <Select
-                value={form.departmentId}
-                onValueChange={(v) => setForm({ ...form, departmentId: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select department">{departmentName}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {departments.map((d) => (
-                    <SelectItem key={d.id} value={d.id}>
-                      {d.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Departments</Label>
+              <p className="text-xs text-muted-foreground">
+                Select every department where this course is offered. Students in any selected
+                department will see it.
+              </p>
+              <div className="grid gap-2 rounded-lg border border-border p-3 sm:grid-cols-2">
+                {departments.map((d) => {
+                  const checked = selectedDeptIds.includes(d.id);
+                  return (
+                    <label key={d.id} className="flex cursor-pointer items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) => toggleDepartment(d.id, v === true)}
+                      />
+                      <span>
+                        {d.name}
+                        <span className="ml-1 text-xs text-muted-foreground">({d.code})</span>
+                      </span>
+                    </label>
+                  );
+                })}
+                {departments.length === 0 && (
+                  <p className="text-xs text-muted-foreground">No departments available.</p>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -488,8 +544,16 @@ function CourseDialog({
                 Cancel
               </Button>
               <Button
-                disabled={saving || !form.code.trim() || !form.title.trim()}
-                onClick={() => onSave(form)}
+                disabled={
+                  saving || !form.code.trim() || !form.title.trim() || selectedDeptIds.length === 0
+                }
+                onClick={() =>
+                  onSave({
+                    ...form,
+                    departmentIds: selectedDeptIds,
+                    departmentId: selectedDeptIds[0] ?? form.departmentId,
+                  })
+                }
               >
                 {saving ? "Saving…" : "Save"}
               </Button>

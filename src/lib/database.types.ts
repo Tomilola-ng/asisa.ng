@@ -111,6 +111,24 @@ export type Database = {
         };
         Relationships: [];
       };
+      course_departments: {
+        Row: {
+          course_id: string;
+          department_id: string;
+          created_at: string;
+        };
+        Insert: {
+          course_id: string;
+          department_id: string;
+          created_at?: string;
+        };
+        Update: {
+          course_id?: string;
+          department_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       departments: {
         Row: {
           code: string;
