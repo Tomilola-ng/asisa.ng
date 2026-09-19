@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getCourse } from "@/lib/api";
 import { requireAuthRedirect } from "@/lib/auth-guard";
+import { courseThumbnail, useLevelImages } from "@/lib/use-level-images";
 import { ArrowLeft, BoxArrowUpRight, FileEarmarkText, Folder2Open } from "react-bootstrap-icons";
 
 export const Route = createFileRoute("/_app/courses/$id")({
@@ -18,6 +19,7 @@ function CoursePage() {
     queryKey: ["course", id],
     queryFn: () => getCourse(id),
   });
+  const { byLevel } = useLevelImages();
 
   if (isLoading) {
     return <div className="text-sm text-muted-foreground">Loading course…</div>;
@@ -34,6 +36,8 @@ function CoursePage() {
     );
   }
 
+  const thumbnailUrl = courseThumbnail(course, byLevel);
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <Link to="/courses" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
@@ -45,7 +49,7 @@ function CoursePage() {
           className="thumb-16-5 bg-cover bg-center"
           style={{
             backgroundColor: "var(--color-hunter)",
-            backgroundImage: course.thumbnailUrl ? `url(${course.thumbnailUrl})` : undefined,
+            backgroundImage: thumbnailUrl ? `url(${thumbnailUrl})` : undefined,
           }}
         />
         <div className="p-6">

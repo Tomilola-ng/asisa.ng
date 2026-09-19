@@ -1,4 +1,4 @@
-import type { Course, Post } from "./types";
+import type { Course, FeatureFlags, Level, LevelImage, Post } from "./types";
 
 const ASI_DEPT = "d-asi";
 
@@ -48,6 +48,64 @@ export const DEMO_COURSES: Course[] = [
     units: 3,
   },
 ];
+
+const DEMO_LEVEL_IMAGES_KEY = "asisa.demo.levelImages";
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error ?? new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
+export function readDemoLevelImages(): LevelImage[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(DEMO_LEVEL_IMAGES_KEY);
+    return raw ? (JSON.parse(raw) as LevelImage[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function writeDemoLevelImage(level: Level, file: File): Promise<LevelImage> {
+  const dataUrl = await readFileAsDataUrl(file);
+  const existing = readDemoLevelImages().filter((img) => img.level !== level);
+  const next: LevelImage = { level, imageUrl: dataUrl };
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(DEMO_LEVEL_IMAGES_KEY, JSON.stringify([...existing, next]));
+  }
+  return next;
+}
+
+const DEMO_FEATURE_FLAGS_KEY = "asisa.demo.featureFlags";
+
+export const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
+  quizVisibleToCourseReps: false,
+  quizVisibleToStudents: false,
+};
+
+export function readDemoFeatureFlags(): FeatureFlags {
+  if (typeof window === "undefined") return DEFAULT_FEATURE_FLAGS;
+  try {
+    const raw = window.localStorage.getItem(DEMO_FEATURE_FLAGS_KEY);
+    return raw
+      ? { ...DEFAULT_FEATURE_FLAGS, ...(JSON.parse(raw) as Partial<FeatureFlags>) }
+      : DEFAULT_FEATURE_FLAGS;
+  } catch {
+    return DEFAULT_FEATURE_FLAGS;
+  }
+}
+
+export function writeDemoFeatureFlags(patch: Partial<FeatureFlags>): FeatureFlags {
+  const next = { ...readDemoFeatureFlags(), ...patch };
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(DEMO_FEATURE_FLAGS_KEY, JSON.stringify(next));
+  }
+  return next;
+}
 
 export const DEMO_POSTS: Post[] = [
   {

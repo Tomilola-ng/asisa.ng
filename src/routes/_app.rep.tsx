@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
 import { LEVELS, SEMESTERS } from "@/lib/data";
@@ -11,10 +11,11 @@ import {
   listCourses,
   listDepartments,
   listSessions,
-  uploadCourseThumbnail,
   upsertCourse,
 } from "@/lib/api";
 import { requireAuthRedirect } from "@/lib/auth-guard";
+import { courseThumbnail, useLevelImages } from "@/lib/use-level-images";
+import { LevelImagesManager } from "@/components/level-images-manager";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -72,8 +73,8 @@ function RepDashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<Course | null>(null);
-  const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Course | null>(null);
+  const { byLevel } = useLevelImages();
 
   useEffect(() => {
     if (user && user.role !== "course_rep" && user.role !== "super_admin") {
@@ -118,14 +119,10 @@ function RepDashboard() {
         },
         user.id,
       );
-      if (thumbFile && saved.id) {
-        await uploadCourseThumbnail(saved.id, user.id, thumbFile);
-      }
       return saved;
     },
     onSuccess: async () => {
       setEditing(null);
-      setThumbFile(null);
       await queryClient.invalidateQueries({ queryKey: ["courses"] });
       await queryClient.invalidateQueries({ queryKey: ["sessions"] });
       toast.success("Course saved");
@@ -157,8 +154,8 @@ function RepDashboard() {
               Course rep dashboard
             </h1>
             <p className="mt-2 inline-flex items-center gap-2 text-sm text-white">
-              <ShieldCheck size={14} className="shrink-0 text-white" /> Upload materials,
-              thumbnails, and Drive links for your level.
+              <ShieldCheck size={14} className="shrink-0 text-white" /> Upload materials and
+              Drive links for your level.
             </p>
           </div>
           <Button
@@ -172,6 +169,8 @@ function RepDashboard() {
         </div>
       </div>
 
+      <LevelImagesManager />
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {mine.map((c) => (
           <Card key={c.id} className="overflow-hidden">
@@ -179,7 +178,10 @@ function RepDashboard() {
               className="thumb-16-5 bg-cover bg-center"
               style={{
                 backgroundColor: "var(--color-hunter)",
-                backgroundImage: c.thumbnailUrl ? `url(${c.thumbnailUrl})` : undefined,
+                backgroundImage: (() => {
+                  const url = courseThumbnail(c, byLevel);
+                  return url ? `url(${url})` : undefined;
+                })(),
               }}
             />
             <CardHeader className="pb-2">
@@ -223,12 +225,7 @@ function RepDashboard() {
         editing={editing}
         departments={departments}
         sessions={sessions}
-        thumbFile={thumbFile}
-        onThumbFile={setThumbFile}
-        onClose={() => {
-          setEditing(null);
-          setThumbFile(null);
-        }}
+        onClose={() => setEditing(null)}
         onSave={(course) => saveMutation.mutate(course)}
         onDelete={editing?.id ? () => setDeleteTarget(editing) : undefined}
         saving={saveMutation.isPending}
@@ -264,8 +261,6 @@ function CourseDialog({
   editing,
   departments,
   sessions,
-  thumbFile,
-  onThumbFile,
   onClose,
   onSave,
   onDelete,
@@ -275,8 +270,6 @@ function CourseDialog({
   editing: Course | null;
   departments: Array<{ id: string; code: string; name: string }>;
   sessions: Array<{ id: string; label: string; isCurrent: boolean }>;
-  thumbFile: File | null;
-  onThumbFile: (f: File | null) => void;
   onClose: () => void;
   onSave: (c: Course) => void;
   onDelete?: () => void;
@@ -284,9 +277,7 @@ function CourseDialog({
   onSessionsChange: () => void;
 }) {
   const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<Course | null>(editing);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [addSessionOpen, setAddSessionOpen] = useState(false);
   const [newSessionLabel, setNewSessionLabel] = useState("");
 
@@ -300,20 +291,9 @@ function CourseDialog({
       ...editing,
       ...(coursesHaveSession ? { sessionId: editing.sessionId ?? currentSession?.id } : {}),
     });
-    onThumbFile(null);
     setAddSessionOpen(false);
     setNewSessionLabel("");
-  }, [editing, sessions, onThumbFile]);
-
-  useEffect(() => {
-    if (!thumbFile) {
-      setPreviewUrl(null);
-      return;
-    }
-    const url = URL.createObjectURL(thumbFile);
-    setPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [thumbFile]);
+  }, [editing, sessions]);
 
   const addSessionMutation = useMutation({
     mutationFn: () => findOrCreateSession(newSessionLabel.trim()),
@@ -328,7 +308,6 @@ function CourseDialog({
     onError: (err: Error) => toast.error(err.message),
   });
 
-  const displayImage = previewUrl ?? form?.thumbnailUrl ?? null;
   const departmentName =
     departments.find((d) => d.id === form?.departmentId)?.name ?? "Select department";
   const sessionValue = form?.sessionId ?? sessions.find((s) => s.isCurrent)?.id ?? "";
@@ -343,41 +322,10 @@ function CourseDialog({
             <DialogTitle>{form.id ? "Edit course" : "Add course"}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4">
-            <div className="space-y-2">
-              <Label>Thumbnail</Label>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={(e) => onThumbFile(e.target.files?.[0] ?? null)}
-              />
-              <button
-                type="button"
-                className="group relative block w-full overflow-hidden rounded-xl border border-border bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {displayImage ? (
-                  <img
-                    src={displayImage}
-                    alt="Course thumbnail"
-                    className="aspect-video w-full object-cover transition-opacity group-hover:opacity-90"
-                  />
-                ) : (
-                  <div className="flex aspect-video flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
-                    <Plus size={22} />
-                    <span>Add thumbnail</span>
-                  </div>
-                )}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/25">
-                  {displayImage ? (
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-background/90 text-foreground opacity-0 shadow transition-opacity group-hover:opacity-100">
-                      <PencilSquare size={16} />
-                    </span>
-                  ) : null}
-                </div>
-              </button>
-            </div>
+            <p className="-mt-1 text-xs text-muted-foreground">
+              The course thumbnail is set automatically from this level's image — manage it in
+              Level images.
+            </p>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">

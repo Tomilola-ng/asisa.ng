@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { isQuizVisibleFor, useFeatureFlags } from "@/lib/use-feature-flags";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -15,6 +16,7 @@ import {
   Book,
   ChatSquareText,
   List,
+  PatchQuestion,
   ShieldLock,
   PersonBadge,
 } from "react-bootstrap-icons";
@@ -53,6 +55,7 @@ function UserAvatar({
 
 function AppLayout() {
   const { user, loading } = useAuth();
+  const { flags } = useFeatureFlags();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -60,9 +63,11 @@ function AppLayout() {
     setMenuOpen(false);
   }, [pathname]);
 
+  const showQuiz = isQuizVisibleFor(user?.role, flags);
   const nav = [
     { title: "Courses", to: "/courses", icon: Book },
     { title: "Feed", to: "/feed", icon: ChatSquareText },
+    ...(showQuiz ? [{ title: "Quiz", to: "/quiz", icon: PatchQuestion }] : []),
   ] as const;
 
   const isActive = (to: string) =>

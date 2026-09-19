@@ -1,14 +1,24 @@
 import { requireSupabase, publicUrl, supabase, supabaseEnabled } from "./supabase";
-import { DEMO_COURSES, DEMO_POSTS } from "./demo-data";
+import {
+  DEFAULT_FEATURE_FLAGS,
+  DEMO_COURSES,
+  DEMO_POSTS,
+  readDemoFeatureFlags,
+  readDemoLevelImages,
+  writeDemoFeatureFlags,
+  writeDemoLevelImage,
+} from "./demo-data";
 import type {
   AcademicSession,
   AsisaUser,
   Comment,
   Course,
   Department,
+  FeatureFlags,
   FeedScope,
   Group,
   Level,
+  LevelImage,
   Post,
   ReactionKind,
   Role,
@@ -226,6 +236,82 @@ export async function uploadCourseThumbnail(
     .eq("id", courseId);
   throwIfError(error);
   return publicUrl("course-thumbnails", path) ?? path;
+}
+
+/**
+ * One shared image per level (100/200/300/400/500) instead of a thumbnail per
+ * course — keeps storage/db small since dozens of courses at the same level
+ * reuse a single image reference.
+ */
+export async function listLevelImages(): Promise<LevelImage[]> {
+  if (!supabaseEnabled) return readDemoLevelImages();
+  const client = requireSupabase();
+  // `level_images` is added via supabase/patches/level-images-and-quizzes.sql
+  // and isn't in the generated Database type yet.
+  const { data, error } = await (client as any).from("level_images").select("*");
+  throwIfError(error);
+  return (data ?? []).map((row) => ({
+    level: row.level as Level,
+    imagePath: row.image_path ?? undefined,
+    imageUrl: publicUrl("level-images", row.image_path),
+  }));
+}
+
+export async function setLevelImage(level: Level, file: File): Promise<LevelImage> {
+  if (!supabaseEnabled) {
+    return writeDemoLevelImage(level, file);
+  }
+  const client = requireSupabase();
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `level-${level}.${ext}`;
+  const { error: uploadError } = await client.storage
+    .from("level-images")
+    .upload(path, file, { contentType: file.type || "image/jpeg", upsert: true });
+  if (uploadError) throw new Error(`Level image upload failed: ${uploadError.message}`);
+
+  const { error } = await (client as any)
+    .from("level_images")
+    .upsert({ level, image_path: path }, { onConflict: "level" });
+  throwIfError(error);
+  return { level, imagePath: path, imageUrl: publicUrl("level-images", path) };
+}
+
+/**
+ * Lets a super admin roll a new feature out to course reps first, then to
+ * students, instead of flipping it on for everyone at once.
+ */
+export async function getFeatureFlags(): Promise<FeatureFlags> {
+  if (!supabaseEnabled) return readDemoFeatureFlags();
+  const client = requireSupabase();
+  const { data, error } = await (client as any)
+    .from("app_settings")
+    .select("*")
+    .eq("id", "feature_flags")
+    .maybeSingle();
+  throwIfError(error);
+  return {
+    quizVisibleToCourseReps:
+      data?.quiz_visible_to_course_reps ?? DEFAULT_FEATURE_FLAGS.quizVisibleToCourseReps,
+    quizVisibleToStudents:
+      data?.quiz_visible_to_students ?? DEFAULT_FEATURE_FLAGS.quizVisibleToStudents,
+  };
+}
+
+export async function setFeatureFlags(patch: Partial<FeatureFlags>): Promise<FeatureFlags> {
+  if (!supabaseEnabled) return writeDemoFeatureFlags(patch);
+  const client = requireSupabase();
+  const row: Record<string, unknown> = { id: "feature_flags" };
+  if (patch.quizVisibleToCourseReps !== undefined) {
+    row.quiz_visible_to_course_reps = patch.quizVisibleToCourseReps;
+  }
+  if (patch.quizVisibleToStudents !== undefined) {
+    row.quiz_visible_to_students = patch.quizVisibleToStudents;
+  }
+  const { error } = await (client as any)
+    .from("app_settings")
+    .upsert(row, { onConflict: "id" });
+  throwIfError(error);
+  return getFeatureFlags();
 }
 
 export async function listGroups(userId?: string): Promise<Group[]> {

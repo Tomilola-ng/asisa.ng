@@ -18,7 +18,9 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { BoxArrowRight, Mortarboard, Person } from "react-bootstrap-icons";
+import type { Role } from "@/lib/types";
 
 export const Route = createFileRoute("/_app/profile")({
   head: () => ({ meta: [{ title: "Profile · Actuarial Science & Insurance Nexus" }] }),
@@ -33,6 +35,12 @@ const NAV: { id: ProfileSection; label: string; icon: typeof Person }[] = [
   { id: "school", label: "School info", icon: Mortarboard },
   { id: "logout", label: "Log out", icon: BoxArrowRight },
 ];
+
+function roleLabel(role?: Role) {
+  if (role === "super_admin") return "Super admin";
+  if (role === "course_rep") return "Course rep";
+  return "Student";
+}
 
 function profileInitials(name: string) {
   return name
@@ -179,6 +187,9 @@ function ProfilePage() {
                     {user?.fullName || "Actuarial Science & Insurance Nexus member"}
                   </p>
                   <p className="truncate text-sm text-muted-foreground">{user?.email}</p>
+                  <div className="flex justify-center sm:justify-start">
+                    <Badge variant="secondary">{roleLabel(user?.role)}</Badge>
+                  </div>
                   <div className="pt-2">
                     <Label htmlFor="avatar" className="sr-only">
                       Profile photo

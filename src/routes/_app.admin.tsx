@@ -16,6 +16,8 @@ import {
   updateDepartment,
 } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LevelImagesManager } from "@/components/level-images-manager";
+import { FeatureFlagsManager } from "@/components/feature-flags-manager";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -265,6 +267,10 @@ function AdminDashboard() {
           </Card>
         ))}
       </div>
+
+      <FeatureFlagsManager />
+
+      <LevelImagesManager />
 
       <Card>
         <CardHeader>
