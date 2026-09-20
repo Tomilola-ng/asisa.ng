@@ -15,7 +15,7 @@ import { CourseCard } from "@/components/course-card";
 import { LoginPromptDialog } from "@/components/login-prompt-dialog";
 import { GUEST_COURSE_LIMIT, LoginGateFade } from "@/components/login-gate-fade";
 import { useAuth } from "@/lib/auth-context";
-import { listCourses, courseInDepartment } from "@/lib/api";
+import { listCourses } from "@/lib/api";
 import { LEVELS, SEMESTERS } from "@/lib/data";
 import { Funnel, Search } from "react-bootstrap-icons";
 
@@ -37,15 +37,9 @@ function Dashboard() {
     queryFn: listCourses,
   });
 
+  // Shared ACS + INS hub: show all courses to signed-in users.
   const filtered = user
     ? courses.filter((c) => {
-        if (
-          user.role !== "super_admin" &&
-          user.departmentId &&
-          !courseInDepartment(c, user.departmentId)
-        ) {
-          return false;
-        }
         if (level !== "all" && String(c.level) !== level) return false;
         if (sem !== "all" && String(c.semester) !== sem) return false;
         if (q && !`${c.code} ${c.title}`.toLowerCase().includes(q.toLowerCase())) return false;

@@ -245,16 +245,46 @@ async function syncCourseDepartments(courseId: string, departmentIds: string[]):
   const unique = [...new Set(departmentIds.filter(Boolean))];
   if (unique.length === 0) return;
 
-  const { error: delError } = await client
+  const { data: existing, error: listError } = await client
     .from("course_departments")
-    .delete()
+    .select("department_id")
     .eq("course_id", courseId);
-  throwIfError(delError);
+  throwIfError(listError);
 
-  const { error: insError } = await client
-    .from("course_departments")
-    .insert(unique.map((department_id) => ({ course_id: courseId, department_id })));
-  throwIfError(insError);
+  const current = new Set((existing ?? []).map((r) => r.department_id));
+  const desired = new Set(unique);
+  const toRemove = [...current].filter((id) => !desired.has(id));
+  const toAdd = [...desired].filter((id) => !current.has(id));
+
+  if (toRemove.length > 0) {
+    const { error: delError } = await client
+      .from("course_departments")
+      .delete()
+      .eq("course_id", courseId)
+      .in("department_id", toRemove);
+    throwIfError(delError);
+  }
+
+  if (toAdd.length > 0) {
+    const { error: insError } = await client
+      .from("course_departments")
+      .insert(toAdd.map((department_id) => ({ course_id: courseId, department_id })));
+    throwIfError(insError);
+  }
+}
+
+function explainCourseWriteError(error: { message: string; code?: string } | null): Error | null {
+  if (!error) return null;
+  const msg = error.message ?? "";
+  if (/row-level security|violates row-level security/i.test(msg)) {
+    return new Error(
+      "Permission denied saving this course. Re-run supabase/patches/fix-courses-recursion.sql in the Supabase SQL editor, then try again.",
+    );
+  }
+  if (/duplicate key|unique constraint/i.test(msg)) {
+    return new Error("A course with this code already exists in that department.");
+  }
+  return new Error(msg);
 }
 
 export async function upsertCourse(
@@ -263,6 +293,9 @@ export async function upsertCourse(
 ): Promise<Course> {
   const client = requireSupabase();
   const departmentIds = resolveDepartmentIds(course);
+  if (departmentIds.length === 0) {
+    throw new Error("Select at least one department");
+  }
   const payload = {
     ...course,
     departmentId: departmentIds[0] ?? course.departmentId,
@@ -279,10 +312,11 @@ export async function upsertCourse(
       .eq("id", payload.id)
       .select("*")
       .single();
-    throwIfError(error);
+    const writeErr = explainCourseWriteError(error);
+    if (writeErr) throw writeErr;
     await syncCourseDepartments(must(data).id, departmentIds);
     return mapCourse({
-      ...(must(data) as Parameters<typeof mapCourse>[0]),
+      ...(must(data) as unknown as Parameters<typeof mapCourse>[0]),
       course_departments: departmentIds.map((department_id) => ({ department_id })),
     });
   }
@@ -292,10 +326,19 @@ export async function upsertCourse(
     .insert(courseRowPayload(payload, userId))
     .select("*")
     .single();
-  throwIfError(error);
-  await syncCourseDepartments(must(data).id, departmentIds);
+  const writeErr = explainCourseWriteError(error);
+  if (writeErr) throw writeErr;
+  try {
+    await syncCourseDepartments(must(data).id, departmentIds);
+  } catch (syncErr) {
+    // Course row exists; surface a clear dept-link error instead of a generic failure.
+    const message = syncErr instanceof Error ? syncErr.message : String(syncErr);
+    throw new Error(
+      `Course saved, but linking departments failed: ${message}. Re-run fix-courses-recursion.sql if this persists.`,
+    );
+  }
   return mapCourse({
-    ...(must(data) as Parameters<typeof mapCourse>[0]),
+    ...(must(data) as unknown as Parameters<typeof mapCourse>[0]),
     course_departments: departmentIds.map((department_id) => ({ department_id })),
   });
 }

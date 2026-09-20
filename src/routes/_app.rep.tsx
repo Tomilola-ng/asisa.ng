@@ -102,14 +102,15 @@ function RepDashboard() {
   const scopedDept =
     user?.scopedDepartmentId ??
     user?.departmentId ??
-    departments.find((d) => d.code === "ASI")?.id ??
+    departments.find((d) => d.code === "ACS" || d.code === "ASI")?.id ??
+    departments[0]?.id ??
     "";
   const scopedLevel = user?.scopedLevel ?? user?.level;
-  const mine = courses.filter(
-    (c) =>
-      user?.role === "super_admin" ||
-      (courseInDepartment(c, scopedDept) && (!scopedLevel || c.level === scopedLevel)),
-  );
+  const mine = courses.filter((c) => {
+    if (user?.role === "super_admin") return true;
+    if (!scopedDept) return !scopedLevel || c.level === scopedLevel;
+    return courseInDepartment(c, scopedDept) && (!scopedLevel || c.level === scopedLevel);
+  });
 
   const saveMutation = useMutation({
     mutationFn: async (course: Course) => {
