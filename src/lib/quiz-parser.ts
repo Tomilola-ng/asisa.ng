@@ -152,26 +152,65 @@ async function extractTextFromImage(
 }
 
 async function extractTextFromPdf(file: File): Promise<string> {
-  const pdfjs = await import("pdfjs-dist");
-  pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    "pdfjs-dist/build/pdf.worker.mjs",
-    import.meta.url,
-  ).toString();
+  const [pdfjs, { default: workerSrc }] = await Promise.all([
+    import("pdfjs-dist"),
+    // `?url` makes Vite emit this as a hashed static asset and rewrite the
+    // import to its real production URL. The previous `new URL(specifier,
+    // import.meta.url)` form isn't reliably rewritten by the TanStack
+    // Start/Nitro SSR build, so in prod it could point at a 404 — pdf.js
+    // then fails inside the worker with an opaque, unhelpful error.
+    import("pdfjs-dist/build/pdf.worker.mjs?url"),
+  ]);
+  pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
   const buffer = await file.arrayBuffer();
-  const doc = await pdfjs.getDocument({ data: buffer }).promise;
+  let doc: Awaited<ReturnType<typeof pdfjs.getDocument>["promise"]>;
+  try {
+    doc = await pdfjs.getDocument({ data: buffer }).promise;
+  } catch (err) {
+    throw new Error(
+      `Couldn't read that PDF (${err instanceof Error ? err.message : String(err)}). Try re-exporting or re-scanning it, or upload a .txt/.md/image instead.`,
+    );
+  }
   const pages: string[] = [];
   for (let i = 1; i <= doc.numPages; i++) {
     const page = await doc.getPage(i);
     const content = await page.getTextContent();
-    const line = content.items.map((item) => ("str" in item ? item.str : "")).join(" ");
-    pages.push(line);
+    // pdf.js gives us a flat run of text fragments per page, not lines — each
+    // fragment marks whether it ends a visual line via `hasEOL`. The parser
+    // below expects one question/option per text line, so we have to
+    // reassemble real lines here instead of joining the whole page into one
+    // string (which silently hides every question from the line-based regexes).
+    let currentLine = "";
+    const lines: string[] = [];
+    for (const item of content.items) {
+      if (!("str" in item)) continue;
+      currentLine += item.str;
+      if ("hasEOL" in item && item.hasEOL) {
+        lines.push(currentLine);
+        currentLine = "";
+      } else {
+        currentLine += " ";
+      }
+    }
+    if (currentLine.trim()) lines.push(currentLine);
+    pages.push(lines.join("\n"));
   }
   return pages.join("\n");
 }
 
 const QUESTION_START = /^\s*(?:q(?:uestion)?\.?\s*)?(\d{1,3})[.)]\s+(.*)$/i;
+// Moodle-style exports ("Q: <stem>") number questions only in a separate
+// header line (see BOILERPLATE_LINE below), not next to the stem itself.
+const QUESTION_START_Q = /^\s*q\s*[:.]\s+(.*)$/i;
 const ANSWER_LINE = /^\s*(?:answer|ans|correct)\s*[:-]\s*\(?([A-Da-d])\)?/i;
+// Moodle quiz-export boilerplate that shows up interleaved with real
+// question text ("Question 6", "Not yet answered", "Marked out of 1",
+// "Select one:") — must be dropped outright rather than falling through to
+// the "continuation of the previous line" branch, or it gets silently
+// appended onto the prior question's last option.
+const BOILERPLATE_LINE =
+  /^\s*(?:question\s+\d+|not yet answered|marked out of \d+(?:\.\d+)?|select one:?|[◄◀]?\s*announcement\s*[►▶]?\s*(?:jump to\.{0,3})?)\s*$/i;
 // Matches every "A. ...", "B) ..." marker in a line, not just one — a
 // column-width OCR pass sometimes flattens several stacked options (or an
 // option plus the next question's number) onto a single text line.
@@ -205,10 +244,25 @@ function splitInlineOptions(line: string): { letter: string; text: string }[] {
  * from the source document is silently lost.
  */
 export function parseQuestionsFromText(text: string): QuizQuestion[] {
-  const lines = text
+  const rawLines = text
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter(Boolean);
+
+  // Some Moodle exports wrap "Question 26" onto two separate text lines
+  // ("Question" then "26"), which BOILERPLATE_LINE can't match as a unit —
+  // left alone, the bare "26" line (and everything after it, since nothing
+  // else matches either) gets silently appended onto the previous
+  // question's last option. Re-fuse the pair before the main pass.
+  const lines: string[] = [];
+  for (let i = 0; i < rawLines.length; i++) {
+    if (/^question$/i.test(rawLines[i]) && /^\d{1,3}$/.test(rawLines[i + 1] ?? "")) {
+      lines.push(`Question ${rawLines[i + 1]}`);
+      i++;
+      continue;
+    }
+    lines.push(rawLines[i]);
+  }
 
   type Block = {
     prompt: string[];
@@ -219,14 +273,16 @@ export function parseQuestionsFromText(text: string): QuizQuestion[] {
   let current: Block | null = null;
 
   for (const line of lines) {
-    const questionMatch = line.match(QUESTION_START);
+    if (BOILERPLATE_LINE.test(line)) continue;
 
-    // A new question number always starts a new block, even if OCR fused
+    const questionMatch = line.match(QUESTION_START) ?? line.match(QUESTION_START_Q);
+
+    // A new question marker always starts a new block, even if OCR fused
     // trailing option text onto the same visual line as the question stem.
     if (questionMatch) {
       current = { prompt: [], options: [] };
       blocks.push(current);
-      const tail = questionMatch[2];
+      const tail = questionMatch[questionMatch.length - 1];
       const tailMatches = [...tail.matchAll(INLINE_OPTION)];
       if (tailMatches.length > 0) {
         const promptPart = tail.slice(0, tailMatches[0].index).trim();

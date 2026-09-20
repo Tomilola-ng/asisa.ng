@@ -5,22 +5,56 @@ University of Lagos.
 
 ## Connect your Supabase project
 
+Migrations here are plain SQL files, not CLI-managed — every step below is a
+manual, one-time run in the Supabase SQL editor. Nothing runs them for you on
+deploy, so a new environment (or a teammate's existing project) needs to run
+them in this order.
+
 1. Create a Supabase project (or use the existing `uni-lagos-asisa-hub` project).
-2. Run the SQL in [`supabase/schema.sql`](./supabase/schema.sql) once (tables, RLS, storage, seed).
+2. Run [`supabase/schema.sql`](./supabase/schema.sql) once (tables, RLS, storage, seed).
+   This file is the current full schema for a **fresh** project — it already
+   includes course sessions, the courses↔departments many-to-many join table,
+   and the non-recursive RLS policies described below.
 3. Run [`supabase/patches/level-images-and-quizzes.sql`](./supabase/patches/level-images-and-quizzes.sql)
    once (level images, quizzes, and the feature-flags table used to roll Quiz out in stages —
-   see [Quiz](#quiz)). Migrations here are plain SQL files, not CLI-managed — running each patch
-   in the SQL editor is a manual, one-time step; nothing runs them for you on deploy.
-4. Copy your project URL and publishable/anon key into `.env` at the repo root:
+   see [Quiz](#quiz)).
+4. **If your project was created before this Quiz PR** (i.e. `schema.sql` was
+   run against your DB before it included sessions/multi-department support),
+   also run, in order:
+   - [`supabase/patches/add-course-session-id.sql`](./supabase/patches/add-course-session-id.sql) — adds `courses.session_id`; then set `VITE_COURSES_HAVE_SESSION=true`.
+   - [`supabase/patches/course-departments-many-to-many.sql`](./supabase/patches/course-departments-many-to-many.sql) — adds the `course_departments` join table; then set `VITE_COURSES_MULTI_DEPT=true`.
+   - [`supabase/patches/fix-thumbnail-storage-rls.sql`](./supabase/patches/fix-thumbnail-storage-rls.sql) — fixes a "new row violates row-level security policy" error on course thumbnail upload.
+
+   (`supabase/patches/admin-improvements.sql` bundles the session-id and
+   thumbnail-RLS fixes above into one file if you'd rather run one patch —
+   don't run both it and the two individual patches it covers.)
+5. Run [`supabase/patches/fix-courses-recursion.sql`](./supabase/patches/fix-courses-recursion.sql)
+   once — **required on every existing project**, even ones already on the
+   latest `schema.sql`-based install, since the `courses` and
+   `course_departments` write policies previously called each other in a raw
+   subquery and Postgres throws `infinite recursion detected in policy for
+   relation "courses"` the first time a course rep or admin adds/edits a
+   course with a linked department. The patch moves those checks into
+   `SECURITY DEFINER` helper functions instead. Brand-new projects that ran
+   the current `schema.sql` (step 2) already have the fix and can skip this.
+6. Copy your project URL and publishable/anon key into `.env` at the repo root:
 
    ```
    VITE_SUPABASE_URL=https://<project-ref>.supabase.co
    VITE_SUPABASE_PUBLISHABLE_KEY=<publishable or anon key>
    ```
 
-5. In Supabase Dashboard → **Authentication → Providers → Email**, turn off
+   If you ran the multi-department and/or course-session patches in step 4,
+   also uncomment the matching flags in `.env` (see `.env.example`):
+
+   ```
+   VITE_COURSES_HAVE_SESSION=true
+   VITE_COURSES_MULTI_DEPT=true
+   ```
+
+7. In Supabase Dashboard → **Authentication → Providers → Email**, turn off
    **Confirm email** while developing (optional but easier for local testing).
-6. Restart the dev server (`npm run dev` / `bun run dev`).
+8. Restart the dev server (`npm run dev` / `bun run dev`).
 
 ## First super admin
 
@@ -37,9 +71,10 @@ on conflict do nothing;
 Then sign out and sign back in. From **Super admin** you can manage users and
 departments, and assign course-rep roles.
 
-If you already deployed an older schema, run
-[`supabase/patches/admin-improvements.sql`](./supabase/patches/admin-improvements.sql)
-once in the SQL editor (course sessions, thumbnail upload fix, admin delete user).
+If you already deployed an older schema, see step 4–5 under
+[Connect your Supabase project](#connect-your-supabase-project) for the
+patches you still need to run (`admin-improvements.sql` also covers admin
+delete-user, on top of the session-id and thumbnail-RLS fixes it bundles).
 
 ## Demo mode (no Supabase yet)
 

@@ -194,6 +194,49 @@ as $$
   )
 $$;
 
+-- Used by the "courses rep write" RLS policy: is this user a rep for
+-- any department linked to this course via course_departments? Routed
+-- through SECURITY DEFINER to avoid RLS recursion between courses and
+-- course_departments (see note on those policies below).
+create or replace function public.course_rep_via_linked_department(
+  _user_id uuid, _course_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.course_departments cd
+    join public.courses c on c.id = cd.course_id
+    where cd.course_id = _course_id
+      and public.is_course_rep_for(_user_id, cd.department_id, c.level)
+  )
+$$;
+
+-- Used by the "course_departments write" RLS policy: is this user a
+-- rep for the course's own department, or for the department being
+-- linked? SECURITY DEFINER for the same recursion-avoidance reason.
+create or replace function public.course_rep_owns_course(
+  _user_id uuid, _course_id uuid, _department_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.courses c
+    where c.id = _course_id
+      and (
+        public.is_course_rep_for(_user_id, c.department_id, c.level)
+        or public.is_course_rep_for(_user_id, _department_id, c.level)
+      )
+  )
+$$;
+
 -- Convenience: current user is in the given class (department, level)
 create or replace function public.in_class(_department_id uuid, _level int)
 returns boolean
@@ -341,6 +384,16 @@ create policy "roles admin write" on public.user_roles
 
 -- Courses: publicly readable; writable by super_admin OR the scoped rep
 -- (primary department or any linked department via course_departments).
+--
+-- NOTE: the rep-write checks below delegate to SECURITY DEFINER helper
+-- functions (course_rep_via_linked_department / course_rep_owns_course)
+-- rather than inlining a raw subquery on the other RLS-protected table.
+-- courses and course_departments each reference the other's rows in
+-- their write policy; a plain `exists (select ... from other_table)`
+-- would re-trigger that table's RLS policy, which re-triggers this one,
+-- causing "infinite recursion detected in policy for relation courses".
+-- Routing through a SECURITY DEFINER function bypasses RLS for that
+-- lookup and breaks the cycle.
 create policy "courses readable" on public.courses
   for select using (true);
 create policy "courses rep write" on public.courses
@@ -348,20 +401,12 @@ create policy "courses rep write" on public.courses
   using (
     public.has_role(auth.uid(), 'super_admin')
     or public.is_course_rep_for(auth.uid(), department_id, level)
-    or exists (
-      select 1 from public.course_departments cd
-      where cd.course_id = courses.id
-        and public.is_course_rep_for(auth.uid(), cd.department_id, courses.level)
-    )
+    or public.course_rep_via_linked_department(auth.uid(), id)
   )
   with check (
     public.has_role(auth.uid(), 'super_admin')
     or public.is_course_rep_for(auth.uid(), department_id, level)
-    or exists (
-      select 1 from public.course_departments cd
-      where cd.course_id = courses.id
-        and public.is_course_rep_for(auth.uid(), cd.department_id, courses.level)
-    )
+    or public.course_rep_via_linked_department(auth.uid(), id)
   );
 
 create policy "course_departments readable" on public.course_departments
@@ -370,25 +415,11 @@ create policy "course_departments write" on public.course_departments
   for all to authenticated
   using (
     public.has_role(auth.uid(), 'super_admin')
-    or exists (
-      select 1 from public.courses c
-      where c.id = course_id
-        and (
-          public.is_course_rep_for(auth.uid(), c.department_id, c.level)
-          or public.is_course_rep_for(auth.uid(), department_id, c.level)
-        )
-    )
+    or public.course_rep_owns_course(auth.uid(), course_id, department_id)
   )
   with check (
     public.has_role(auth.uid(), 'super_admin')
-    or exists (
-      select 1 from public.courses c
-      where c.id = course_id
-        and (
-          public.is_course_rep_for(auth.uid(), c.department_id, c.level)
-          or public.is_course_rep_for(auth.uid(), department_id, c.level)
-        )
-    )
+    or public.course_rep_owns_course(auth.uid(), course_id, department_id)
   );
 
 -- Groups: any authenticated user can list; private groups only readable
