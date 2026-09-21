@@ -43,10 +43,24 @@ begin
   if target_user_id = auth.uid() then
     raise exception 'You cannot delete your own account here';
   end if;
+  if not exists (select 1 from auth.users where id = target_user_id) then
+    raise exception 'User not found';
+  end if;
+
+  if to_regclass('public.quiz_questions') is not null
+     and to_regclass('public.quizzes') is not null then
+    delete from public.quiz_questions
+    where quiz_id in (
+      select id from public.quizzes where created_by = target_user_id
+    );
+    delete from public.quizzes where created_by = target_user_id;
+  end if;
+
   delete from auth.users where id = target_user_id;
 end;
 $$;
 
 grant execute on function public.has_role(uuid, public.app_role) to authenticated;
 grant execute on function public.is_course_rep_for(uuid, uuid, int) to authenticated;
+revoke all on function public.admin_delete_user(uuid) from public, anon;
 grant execute on function public.admin_delete_user(uuid) to authenticated;

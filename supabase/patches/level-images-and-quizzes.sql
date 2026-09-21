@@ -51,7 +51,7 @@ create table if not exists public.quizzes (
   id          uuid primary key default gen_random_uuid(),
   course_id   uuid not null references public.courses(id) on delete cascade,
   title       text not null,
-  created_by  uuid not null references public.profiles(id),
+  created_by  uuid not null references public.profiles(id) on delete cascade,
   created_at  timestamptz not null default now()
 );
 

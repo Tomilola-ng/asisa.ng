@@ -900,7 +900,14 @@ export async function updateAdminUserProfile(
 export async function deleteAdminUser(userId: string): Promise<void> {
   const client = requireSupabase();
   const { error } = await client.rpc("admin_delete_user", { target_user_id: userId });
-  throwIfError(error);
+  if (error) {
+    if (/Could not find the function|PGRST202/i.test(error.message)) {
+      throw new Error(
+        "User delete is not set up on the database yet. Run supabase/patches/fix-admin-delete-user.sql in the Supabase SQL editor, then try again.",
+      );
+    }
+    throw new Error(error.message);
+  }
 }
 
 export async function listProfilesForAdmin(): Promise<

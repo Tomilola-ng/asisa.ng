@@ -591,6 +591,20 @@ begin
   if target_user_id = auth.uid() then
     raise exception 'You cannot delete your own account here';
   end if;
+  if not exists (select 1 from auth.users where id = target_user_id) then
+    raise exception 'User not found';
+  end if;
+
+  -- quizzes.created_by may not cascade on older installs; clean explicitly.
+  if to_regclass('public.quiz_questions') is not null
+     and to_regclass('public.quizzes') is not null then
+    delete from public.quiz_questions
+    where quiz_id in (
+      select id from public.quizzes where created_by = target_user_id
+    );
+    delete from public.quizzes where created_by = target_user_id;
+  end if;
+
   delete from auth.users where id = target_user_id;
 end;
 $$;

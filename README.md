@@ -37,7 +37,11 @@ them in this order.
    course with a linked department. The patch moves those checks into
    `SECURITY DEFINER` helper functions instead. Brand-new projects that ran
    the current `schema.sql` (step 2) already have the fix and can skip this.
-6. Copy your project URL and publishable/anon key into `.env` at the repo root:
+6. Run [`supabase/patches/fix-admin-delete-user.sql`](./supabase/patches/fix-admin-delete-user.sql)
+   once if **Admin → Delete user** fails with a missing-function error. This
+   creates `admin_delete_user` and cleans quiz ownership so deletes aren't
+   blocked by foreign keys.
+7. Copy your project URL and publishable/anon key into `.env` at the repo root:
 
    ```
    VITE_SUPABASE_URL=https://<project-ref>.supabase.co
@@ -52,9 +56,9 @@ them in this order.
    VITE_COURSES_MULTI_DEPT=true
    ```
 
-7. In Supabase Dashboard → **Authentication → Providers → Email**, turn off
+8. In Supabase Dashboard → **Authentication → Providers → Email**, turn off
    **Confirm email** while developing (optional but easier for local testing).
-8. Restart the dev server (`npm run dev` / `bun run dev`).
+9. Restart the dev server (`npm run dev` / `bun run dev`).
 
 ## First super admin
 
