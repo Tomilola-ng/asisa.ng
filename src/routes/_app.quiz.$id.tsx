@@ -44,9 +44,12 @@ function TakeQuiz() {
     );
   }
 
-  const mcqQuestions = quiz.questions.filter(
-    (q) => q.type === "mcq" && q.correctIndex !== undefined,
-  );
+  const allMcqQuestions = quiz.questions.filter((q) => q.type === "mcq");
+  // Only questions with a marked correct answer can be graded — a rep can
+  // publish a quiz without marking any, in which case there's nothing to
+  // score. Surface that explicitly instead of silently showing no score box.
+  const mcqQuestions = allMcqQuestions.filter((q) => q.correctIndex !== undefined);
+  const unscoredMcqCount = allMcqQuestions.length - mcqQuestions.length;
   const score = submitted
     ? mcqQuestions.filter((q) => answers[q.id] === String(q.correctIndex)).length
     : null;
@@ -68,6 +71,18 @@ function TakeQuiz() {
       {submitted && mcqQuestions.length > 0 && (
         <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-medium">
           Score: {score} / {mcqQuestions.length}
+          {unscoredMcqCount > 0 && (
+            <span className="ml-2 font-normal text-muted-foreground">
+              ({unscoredMcqCount} question{unscoredMcqCount === 1 ? "" : "s"} not scored — no
+              correct answer was marked for {unscoredMcqCount === 1 ? "it" : "them"})
+            </span>
+          )}
+        </div>
+      )}
+      {submitted && mcqQuestions.length === 0 && allMcqQuestions.length > 0 && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+          This quiz doesn't have an answer key yet — whoever published it didn't mark correct
+          answers, so there's no score to show.
         </div>
       )}
 

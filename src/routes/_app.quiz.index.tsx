@@ -217,6 +217,15 @@ function CreateQuizDialog({
     setQuestions((qs) => qs.filter((q) => q.id !== id));
   }
 
+  // Nothing stops a rep from continuing without marking any correct answers
+  // — the take-quiz page then has no way to grade the quiz at all and used
+  // to show nothing (not even an explanation) after submit. Surface the gap
+  // here instead, before publish, so it isn't discovered by a confused student.
+  const unmarkedMcqCount = useMemo(
+    () => questions.filter((q) => q.type === "mcq" && q.correctIndex === undefined).length,
+    [questions],
+  );
+
   const publishMutation = useMutation({
     mutationFn: () =>
       createQuiz({
@@ -294,6 +303,14 @@ function CreateQuizDialog({
               Extracted from <span className="font-medium">{fileName}</span> — edit anything the
               scan got wrong.
             </p>
+            {unmarkedMcqCount > 0 && (
+              <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
+                {unmarkedMcqCount} multiple-choice question{unmarkedMcqCount === 1 ? "" : "s"}{" "}
+                {unmarkedMcqCount === 1 ? "doesn't" : "don't"} have a correct answer marked yet.
+                Select the radio button next to the right option for each one, or students won't
+                see a score when they submit.
+              </p>
+            )}
             <div className="space-y-4">
               {questions.map((q, index) => (
                 <QuestionEditor
@@ -338,6 +355,13 @@ function CreateQuizDialog({
             <p className="text-xs text-muted-foreground">
               {questions.length} question{questions.length === 1 ? "" : "s"} will be published.
             </p>
+            {unmarkedMcqCount > 0 && (
+              <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
+                {unmarkedMcqCount} of those multiple-choice question{unmarkedMcqCount === 1 ? "" : "s"}{" "}
+                still {unmarkedMcqCount === 1 ? "has" : "have"} no correct answer marked — go back
+                and select one for each, or students won't get a score.
+              </p>
+            )}
           </div>
         )}
 
