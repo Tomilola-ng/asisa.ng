@@ -18,7 +18,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Search } from "react-bootstrap-icons";
 
 export const Route = createFileRoute("/_app/courses/")({
-  head: () => ({ meta: [{ title: "Courses · Actuarial Science & Insurance Nexus" }] }),
+  head: () => ({ meta: [{ title: "Courses · Actuarial Science & Insurance Ascendants" }] }),
   component: CoursesIndex,
 });
 

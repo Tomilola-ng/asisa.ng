@@ -52,7 +52,7 @@ import { Plus, PencilSquare, ShieldCheck, Trash } from "react-bootstrap-icons";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/rep")({
-  head: () => ({ meta: [{ title: "Course rep dashboard · Actuarial Science & Insurance Nexus" }] }),
+  head: () => ({ meta: [{ title: "Course rep dashboard · Actuarial Science & Insurance Ascendants" }] }),
   beforeLoad: () => requireAuthRedirect(),
   component: RepDashboard,
 });

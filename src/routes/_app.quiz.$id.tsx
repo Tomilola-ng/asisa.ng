@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft } from "react-bootstrap-icons";
 
 export const Route = createFileRoute("/_app/quiz/$id")({
-  head: () => ({ meta: [{ title: "Quiz · Actuarial Science & Insurance Nexus" }] }),
+  head: () => ({ meta: [{ title: "Quiz · Actuarial Science & Insurance Ascendants" }] }),
   beforeLoad: () => requireAuthRedirect(),
   component: TakeQuiz,
 });

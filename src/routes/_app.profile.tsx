@@ -23,7 +23,7 @@ import { BoxArrowRight, Mortarboard, Person } from "react-bootstrap-icons";
 import type { Role } from "@/lib/types";
 
 export const Route = createFileRoute("/_app/profile")({
-  head: () => ({ meta: [{ title: "Profile · Actuarial Science & Insurance Nexus" }] }),
+  head: () => ({ meta: [{ title: "Profile · Actuarial Science & Insurance Ascendants" }] }),
   beforeLoad: () => requireAuthRedirect(),
   component: ProfilePage,
 });
@@ -171,7 +171,7 @@ function ProfilePage() {
               <div>
                 <h2 className="font-display text-lg font-semibold">General info</h2>
                 <p className="mt-0.5 text-sm text-muted-foreground">
-                  Your photo and display name on Actuarial Science & Insurance Nexus.
+                  Your photo and display name on Actuarial Science & Insurance Ascendants.
                 </p>
               </div>
 
@@ -184,7 +184,7 @@ function ProfilePage() {
                 </Avatar>
                 <div className="w-full min-w-0 flex-1 space-y-1.5 text-center sm:text-left">
                   <p className="truncate font-display text-xl font-semibold">
-                    {user?.fullName || "Actuarial Science & Insurance Nexus member"}
+                    {user?.fullName || "Actuarial Science & Insurance Ascendants member"}
                   </p>
                   <p className="truncate text-sm text-muted-foreground">{user?.email}</p>
                   <div className="flex justify-center sm:justify-start">
@@ -295,7 +295,7 @@ function ProfilePage() {
               <div className="rounded-2xl border border-border bg-muted/20 px-5 py-6">
                 <p className="font-medium">Are you sure you want to log out?</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  You can sign back in anytime with your Actuarial Science & Insurance Nexus
+                  You can sign back in anytime with your Actuarial Science & Insurance Ascendants
                   account.
                 </p>
                 <div className="mt-5 flex flex-wrap gap-2">

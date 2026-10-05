@@ -8,7 +8,7 @@ import { courseThumbnail, useLevelImages } from "@/lib/use-level-images";
 import { ArrowLeft, BoxArrowUpRight, FileEarmarkText, Folder2Open } from "react-bootstrap-icons";
 
 export const Route = createFileRoute("/_app/courses/$id")({
-  head: () => ({ meta: [{ title: "Course · Actuarial Science & Insurance Nexus" }] }),
+  head: () => ({ meta: [{ title: "Course · Actuarial Science & Insurance Ascendants" }] }),
   beforeLoad: () => requireAuthRedirect(),
   component: CoursePage,
 });

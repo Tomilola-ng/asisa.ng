@@ -54,7 +54,7 @@ import type { AdminUser, Role } from "@/lib/types";
 import { requireAuthRedirect } from "@/lib/auth-guard";
 
 export const Route = createFileRoute("/_app/admin")({
-  head: () => ({ meta: [{ title: "Super admin · Actuarial Science & Insurance Nexus" }] }),
+  head: () => ({ meta: [{ title: "Super admin · Actuarial Science & Insurance Ascendants" }] }),
   beforeLoad: () => requireAuthRedirect(),
   component: AdminDashboard,
 });

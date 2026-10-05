@@ -54,7 +54,7 @@ export function AuthHeroPanel({ className, compact = false }: AuthHeroPanelProps
               </p>
             </div>
             <p className="text-xs text-white/65">
-              Actuarial Science & Insurance Nexus · University of Lagos
+              {PLATFORM_NAME} · University of Lagos
             </p>
           </>
         )}

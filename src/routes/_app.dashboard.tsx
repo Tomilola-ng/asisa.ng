@@ -20,7 +20,7 @@ import { LEVELS, SEMESTERS } from "@/lib/data";
 import { Funnel, Search } from "react-bootstrap-icons";
 
 export const Route = createFileRoute("/_app/dashboard")({
-  head: () => ({ meta: [{ title: "Home · Actuarial Science & Insurance Nexus" }] }),
+  head: () => ({ meta: [{ title: "Home · Actuarial Science & Insurance Ascendants" }] }),
   component: Dashboard,
 });
 
@@ -64,12 +64,12 @@ function Dashboard() {
                   {user.fullName || user.email}
                 </h1>
                 <p className="mt-1.5 text-sm text-white/75 sm:mt-2">
-                  {user.level ? `${user.level} Level` : "Student"} · Actuarial Science & Insurance Nexus
+                  {user.level ? `${user.level} Level` : "Student"} · Actuarial Science & Insurance Ascendants
                 </p>
               </>
             ) : (
               <>
-                <p className="text-sm text-white/75">Actuarial Science & Insurance Nexus</p>
+                <p className="text-sm text-white/75">Actuarial Science & Insurance Ascendants</p>
                 <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight text-white sm:mt-1.5 sm:text-4xl">
                   Your community hub
                 </h1>

@@ -24,8 +24,8 @@ export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Sign in · Actuarial Science & Insurance Nexus" },
-      { name: "description", content: "Sign in or create your Actuarial Science & Insurance Nexus account." },
+      { title: "Sign in · Actuarial Science & Insurance Ascendants" },
+      { name: "description", content: "Sign in or create your Actuarial Science & Insurance Ascendants account." },
     ],
   }),
   component: AuthPage,
@@ -142,7 +142,7 @@ function AuthPage() {
                 ? "Enter your email and we'll send you a reset link."
                 : mode === "signup"
                   ? "Register with your UNILAG student email."
-                  : "Sign in to your Actuarial Science & Insurance Nexus account."}
+                  : "Sign in to your Actuarial Science & Insurance Ascendants account."}
           </p>
 
           {!supabaseEnabled && !showForgot && !showSetPassword && (
