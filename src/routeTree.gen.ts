@@ -9,58 +9,38 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppRepRouteImport } from './routes/_app.rep'
-import { Route as AppQuizRouteImport } from './routes/_app.quiz'
-import { Route as AppProfileRouteImport } from './routes/_app.profile'
-import { Route as AppFeedRouteImport } from './routes/_app.feed'
-import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
-import { Route as AppCoursesRouteImport } from './routes/_app.courses'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
-import { Route as AppQuizIndexRouteImport } from './routes/_app.quiz.index'
+import { Route as AppCoursesRouteImport } from './routes/_app.courses'
+import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppFeedRouteImport } from './routes/_app.feed'
+import { Route as AppProfileRouteImport } from './routes/_app.profile'
+import { Route as AppQuizRouteImport } from './routes/_app.quiz'
+import { Route as AppRepRouteImport } from './routes/_app.rep'
 import { Route as AppCoursesIndexRouteImport } from './routes/_app.courses.index'
-import { Route as AppQuizIdRouteImport } from './routes/_app.quiz.$id'
 import { Route as AppCoursesIdRouteImport } from './routes/_app.courses.$id'
+import { Route as AppQuizIndexRouteImport } from './routes/_app.quiz.index'
+import { Route as AppQuizIdRouteImport } from './routes/_app.quiz.$id'
 
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppRepRoute = AppRepRouteImport.update({
-  id: '/rep',
-  path: '/rep',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppQuizRoute = AppQuizRouteImport.update({
-  id: '/quiz',
-  path: '/quiz',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppProfileRoute = AppProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppFeedRoute = AppFeedRouteImport.update({
-  id: '/feed',
-  path: '/feed',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDashboardRoute = AppDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCoursesRoute = AppCoursesRouteImport.update({
@@ -68,30 +48,50 @@ const AppCoursesRoute = AppCoursesRouteImport.update({
   path: '/courses',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAdminRoute = AppAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
-const AppQuizIndexRoute = AppQuizIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppQuizRoute,
+const AppFeedRoute = AppFeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppQuizRoute = AppQuizRouteImport.update({
+  id: '/quiz',
+  path: '/quiz',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRepRoute = AppRepRouteImport.update({
+  id: '/rep',
+  path: '/rep',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppCoursesIndexRoute = AppCoursesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppCoursesRoute,
 } as any)
-const AppQuizIdRoute = AppQuizIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AppQuizRoute,
-} as any)
 const AppCoursesIdRoute = AppCoursesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => AppCoursesRoute,
+} as any)
+const AppQuizIndexRoute = AppQuizIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppQuizRoute,
+} as any)
+const AppQuizIdRoute = AppQuizIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppQuizRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -194,11 +194,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -208,46 +208,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/rep': {
-      id: '/_app/rep'
-      path: '/rep'
-      fullPath: '/rep'
-      preLoaderRoute: typeof AppRepRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/quiz': {
-      id: '/_app/quiz'
-      path: '/quiz'
-      fullPath: '/quiz'
-      preLoaderRoute: typeof AppQuizRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/profile': {
-      id: '/_app/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof AppProfileRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/feed': {
-      id: '/_app/feed'
-      path: '/feed'
-      fullPath: '/feed'
-      preLoaderRoute: typeof AppFeedRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/dashboard': {
-      id: '/_app/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AppDashboardRouteImport
+    '/_app/admin': {
+      id: '/_app/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/courses': {
@@ -257,19 +229,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCoursesRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/admin': {
-      id: '/_app/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AppAdminRouteImport
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/quiz/': {
-      id: '/_app/quiz/'
-      path: '/'
-      fullPath: '/quiz/'
-      preLoaderRoute: typeof AppQuizIndexRouteImport
-      parentRoute: typeof AppQuizRoute
+    '/_app/feed': {
+      id: '/_app/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof AppFeedRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/profile': {
+      id: '/_app/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/quiz': {
+      id: '/_app/quiz'
+      path: '/quiz'
+      fullPath: '/quiz'
+      preLoaderRoute: typeof AppQuizRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/rep': {
+      id: '/_app/rep'
+      path: '/rep'
+      fullPath: '/rep'
+      preLoaderRoute: typeof AppRepRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/courses/': {
       id: '/_app/courses/'
@@ -278,19 +271,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCoursesIndexRouteImport
       parentRoute: typeof AppCoursesRoute
     }
-    '/_app/quiz/$id': {
-      id: '/_app/quiz/$id'
-      path: '/$id'
-      fullPath: '/quiz/$id'
-      preLoaderRoute: typeof AppQuizIdRouteImport
-      parentRoute: typeof AppQuizRoute
-    }
     '/_app/courses/$id': {
       id: '/_app/courses/$id'
       path: '/$id'
       fullPath: '/courses/$id'
       preLoaderRoute: typeof AppCoursesIdRouteImport
       parentRoute: typeof AppCoursesRoute
+    }
+    '/_app/quiz/': {
+      id: '/_app/quiz/'
+      path: '/'
+      fullPath: '/quiz/'
+      preLoaderRoute: typeof AppQuizIndexRouteImport
+      parentRoute: typeof AppQuizRoute
+    }
+    '/_app/quiz/$id': {
+      id: '/_app/quiz/$id'
+      path: '/$id'
+      fullPath: '/quiz/$id'
+      preLoaderRoute: typeof AppQuizIdRouteImport
+      parentRoute: typeof AppQuizRoute
     }
   }
 }
