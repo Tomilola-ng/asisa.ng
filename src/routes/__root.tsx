@@ -81,7 +81,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Community platform for the Department of Actuarial Science and Insurance at the University of Lagos. Courses, feeds, groups and resources.",
+          "Courses, feeds, and resources for Actuarial Science and Insurance students at the University of Lagos.",
       },
       { property: "og:title", content: PLATFORM_NAME },
       {

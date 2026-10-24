@@ -3,8 +3,8 @@ import { LoginGateFade } from "@/components/login-gate-fade";
 import { useAuth } from "@/lib/auth-context";
 
 const TITLE = "Campus feed";
-const DESCRIPTION = "Announcements and discussion from the Actuarial Science & Insurance Ascendants community.";
-const LOGIN_MESSAGE = "You need to be logged in to access the campus feed.";
+const DESCRIPTION = "Announcements and discussion from Actuarial Science & Insurance Ascendants.";
+const LOGIN_MESSAGE = "Log in to read the campus feed.";
 
 interface CampusFeedSectionProps {
   /** Compact layout when embedded on the dashboard */

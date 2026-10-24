@@ -120,7 +120,7 @@ function CoursesIndex() {
         <LoginGateFade
           title=""
           variant="courses"
-          message="You need to be logged in to view the full course directory."
+          message="Log in to see the full course directory."
         />
       )}
 

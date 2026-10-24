@@ -78,7 +78,7 @@ function CoursePage() {
         <ResourceCard
           icon={Folder2Open}
           title="Course files (Google Drive)"
-          description="Slides, notes and reading materials curated by the course rep."
+          description="Slides, notes, and reading materials from the course rep."
           href={course.driveFolderUrl}
         />
         <ResourceCard

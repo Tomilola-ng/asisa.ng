@@ -35,3 +35,16 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Agent / skills installs (local tooling only; not part of the app runtime)
+.agents/
+.skills/
+.claude/
+.codex/
+.cursor/skills/
+.continue/
+.windsurf/
+.clinerules/
+.amp/
+skills/
+skills-lock.json

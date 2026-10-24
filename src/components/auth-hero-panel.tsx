@@ -46,11 +46,11 @@ export function AuthHeroPanel({ className, compact = false }: AuthHeroPanelProps
           <>
             <div>
               <h2 className="font-display text-4xl font-semibold leading-tight text-white">
-                Your class, your coursework, your community.
+                Course files, feeds, and announcements.
               </h2>
               <p className="mt-4 max-w-md text-sm text-white/85">
-                Sign in with your student credentials to access course files, class feeds and
-                community announcements.
+                Sign in with your student account to open Drive folders, class discussions, and
+                department notices.
               </p>
             </div>
             <p className="text-xs text-white/65">
@@ -61,7 +61,7 @@ export function AuthHeroPanel({ className, compact = false }: AuthHeroPanelProps
 
         {compact && (
           <p className="max-w-xs text-sm text-white/85">
-            Your class, your coursework, your community.
+            Course files, feeds, and announcements in one place.
           </p>
         )}
       </div>

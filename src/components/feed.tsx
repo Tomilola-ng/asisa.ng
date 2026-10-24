@@ -127,16 +127,16 @@ export function Feed({
     loginReason === "post"
       ? {
           title: "Sign in to post",
-          description: "Join Actuarial Science & Insurance Ascendants to share updates, ask questions, and join the conversation.",
+          description: "Create an Actuarial Science & Insurance Ascendants account to share updates or ask a question.",
         }
       : loginReason === "interact"
         ? {
-            title: "Sign in to interact",
-            description: "Log in to like posts, read comments, and reply to classmates.",
+            title: "Sign in to reply",
+            description: "Log in to like posts and leave comments.",
           }
         : {
-            title: "Sign in to see the full feed",
-            description: "Log in to read what the community is saying and take part in discussions.",
+            title: "Sign in for the full feed",
+            description: "Log in to read every post and reply.",
           };
 
   const handlePublish = () => {
@@ -166,7 +166,7 @@ export function Feed({
         <Textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          placeholder="Share an update, a question, an announcement…"
+          placeholder="Write an update or question…"
           className="min-h-[100px] resize-none rounded-2xl pb-12"
         />
         {hasComposerText && (
@@ -268,9 +268,9 @@ export function Feed({
 
         {showGuestFeedCta && (
           <div className="rounded-2xl border border-border bg-muted/30 px-5 py-6 text-center">
-            <p className="font-medium">See what the community is saying</p>
+            <p className="font-medium">More posts after you log in</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Log in to read the full campus feed and join the conversation.
+              Open the full campus feed and reply to classmates.
             </p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               <Button size="sm" onClick={() => openLogin("feed")}>
@@ -287,7 +287,7 @@ export function Feed({
 
         {!postsQuery.isLoading && posts.length === 0 && (
           <div className="border-b border-border py-10 text-center text-sm text-muted-foreground">
-            {user ? "No posts yet. Be the first to share." : "No posts yet. Sign in to be the first to share."}
+            {user ? "No posts yet." : "No posts yet. Sign in to post."}
           </div>
         )}
       </div>

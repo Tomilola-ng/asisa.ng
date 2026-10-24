@@ -20,7 +20,7 @@ export function LoginPromptDialog({
   open,
   onOpenChange,
   title = "Sign in to continue",
-  description = "Create a free Actuarial Science & Insurance Ascendants account or log in to access course materials, the full feed, and more.",
+  description = "Create a free Actuarial Science & Insurance Ascendants account, or log in, to open course materials and the full feed.",
 }: LoginPromptDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>

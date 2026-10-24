@@ -137,7 +137,7 @@ function AuthPage() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {showSetPassword
-              ? "You're almost done. Enter a new password for your account."
+              ? "Enter a new password for your account."
               : showForgot
                 ? "Enter your email and we'll send you a reset link."
                 : mode === "signup"

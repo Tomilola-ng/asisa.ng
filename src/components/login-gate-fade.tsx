@@ -12,7 +12,7 @@ interface LoginGateFadeProps {
 export function LoginGateFade({
   title,
   description,
-  message = "You need to be logged in to get access to this section.",
+  message = "Log in to open this section.",
 }: LoginGateFadeProps) {
   return (
     <section className={title || description ? "space-y-3" : ""}>
@@ -34,7 +34,7 @@ export function LoginGateFade({
           />
           <p className="mt-4 max-w-md font-medium">{message}</p>
           <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">
-            Sign in or create a free Actuarial Science & Insurance Ascendants account to continue.
+            Log in or create a free Actuarial Science & Insurance Ascendants account.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-2">
             <Button asChild>

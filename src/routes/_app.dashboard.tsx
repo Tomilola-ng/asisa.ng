@@ -17,7 +17,8 @@ import { GUEST_COURSE_LIMIT, LoginGateFade } from "@/components/login-gate-fade"
 import { useAuth } from "@/lib/auth-context";
 import { listCourses } from "@/lib/api";
 import { LEVELS, SEMESTERS } from "@/lib/data";
-import { Funnel, Search } from "react-bootstrap-icons";
+import { EXECUTIVES_GROUP_IMAGE } from "@/lib/executives";
+import { ArrowRight, Calculator, Funnel, Search } from "react-bootstrap-icons";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({ meta: [{ title: "Home · Actuarial Science & Insurance Ascendants" }] }),
@@ -71,10 +72,11 @@ function Dashboard() {
               <>
                 <p className="text-sm text-white/75">Actuarial Science & Insurance Ascendants</p>
                 <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight text-white sm:mt-1.5 sm:text-4xl">
-                  Your community hub
+                  Courses, feed, and materials
                 </h1>
                 <p className="mt-1.5 text-sm text-white/75 sm:mt-2">
-                  Browse courses, peek at the feed, and join to unlock materials and discussions.
+                  Browse what&apos;s open to guests. Create an account to open Drive files and the
+                  full feed.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Button asChild size="sm" variant="secondary">
@@ -105,6 +107,35 @@ function Dashboard() {
           </div>
         </div>
       </section>
+
+      <Link
+        to="/executives"
+        className="group relative block overflow-hidden rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <div className="absolute inset-0">
+          <img
+            src={EXECUTIVES_GROUP_IMAGE}
+            alt=""
+            className="h-full w-full object-cover object-[center_25%] transition-transform duration-700 group-hover:scale-[1.03]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-evergreen via-evergreen/80 to-evergreen/35" />
+        </div>
+        <div className="relative flex min-h-[140px] items-end justify-between gap-4 px-5 py-5 sm:min-h-[160px] sm:px-7 sm:py-6">
+          <div className="max-w-md">
+            <p className="text-xs font-medium uppercase tracking-wide text-lime-cream/90">ASISA</p>
+            <h2 className="mt-1 font-display text-xl font-semibold text-white sm:text-2xl">
+              Meet the executives
+            </h2>
+            <p className="mt-1.5 text-sm text-white/80">
+              Who ASISA is, and this year&apos;s executive team.
+            </p>
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm transition-colors group-hover:bg-white/25">
+            View
+            <ArrowRight size={14} />
+          </span>
+        </div>
+      </Link>
 
       <section className="space-y-3">
         <div>
@@ -217,7 +248,7 @@ function Dashboard() {
             <LoginGateFade
               title=""
               variant="courses"
-              message="You need to be logged in to view the full course directory."
+              message="Log in to see the full course directory."
             />
           </>
         ) : (
@@ -250,6 +281,28 @@ function Dashboard() {
           </>
         )}
       </section>
+
+      <Link
+        to="/cgpa"
+        className="group flex flex-col justify-between gap-4 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-lime-cream/60 via-background to-palm/20 p-5 transition-colors hover:border-palm/50 sm:flex-row sm:items-center sm:p-6"
+      >
+        <div className="flex items-start gap-4">
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground">
+            <Calculator size={20} />
+          </span>
+          <div>
+            <h2 className="font-display text-xl font-semibold">GPA &amp; CGPA Calculator</h2>
+            <p className="mt-1 max-w-lg text-sm text-muted-foreground">
+              Semester GPA, cumulative CGPA, or the GPA you need for a target, using the UNILAG
+              five-point scale.
+            </p>
+          </div>
+        </div>
+        <span className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-primary">
+          Open calculator
+          <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
+        </span>
+      </Link>
 
       <CampusFeedSection embedded className="border-t border-border pt-6" />
 

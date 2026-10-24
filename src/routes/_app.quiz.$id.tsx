@@ -73,7 +73,7 @@ function TakeQuiz() {
           Score: {score} / {mcqQuestions.length}
           {unscoredMcqCount > 0 && (
             <span className="ml-2 font-normal text-muted-foreground">
-              ({unscoredMcqCount} question{unscoredMcqCount === 1 ? "" : "s"} not scored — no
+              ({unscoredMcqCount} question{unscoredMcqCount === 1 ? "" : "s"} not scored: no
               correct answer was marked for {unscoredMcqCount === 1 ? "it" : "them"})
             </span>
           )}
@@ -81,8 +81,8 @@ function TakeQuiz() {
       )}
       {submitted && mcqQuestions.length === 0 && allMcqQuestions.length > 0 && (
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
-          This quiz doesn't have an answer key yet — whoever published it didn't mark correct
-          answers, so there's no score to show.
+          This quiz doesn&apos;t have an answer key yet. Whoever published it didn&apos;t mark
+          correct answers, so there&apos;s no score to show.
         </div>
       )}
 

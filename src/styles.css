@@ -46,6 +46,7 @@
   --color-fern: var(--fern);
   --color-palm: var(--palm);
   --color-lime-cream: var(--lime-cream);
+  --color-paper: var(--paper);
 
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -60,42 +61,43 @@
 :root {
   --radius: 0.5rem;
 
-  /* ASISA brand palette */
-  --evergreen: oklch(0.28 0.05 145);      /* #132a13 */
-  --hunter:    oklch(0.40 0.08 143);      /* #31572c */
-  --fern:      oklch(0.53 0.13 135);      /* #4f772d */
-  --palm:      oklch(0.74 0.14 125);      /* #90a955 */
-  --lime-cream:oklch(0.95 0.13 110);      /* #ecf39e */
+  /* ASISA brand: faculty green from crest + exec portraits */
+  --evergreen: oklch(0.28 0.05 145); /* #132a13 */
+  --hunter: oklch(0.40 0.08 143); /* #31572c */
+  --fern: oklch(0.53 0.13 135); /* #4f772d */
+  --palm: oklch(0.74 0.14 125); /* #90a955 */
+  --lime-cream: oklch(0.95 0.13 110); /* #ecf39e */
+  --paper: oklch(0.972 0.018 140); /* cool green paper, not warm cream */
 
-  --background: oklch(1 0 0);
+  --background: var(--paper);
   --foreground: var(--evergreen);
-  --card: oklch(1 0 0);
+  --card: oklch(0.995 0.004 135);
   --card-foreground: var(--evergreen);
-  --popover: oklch(1 0 0);
+  --popover: oklch(0.995 0.004 135);
   --popover-foreground: var(--evergreen);
 
   --primary: var(--hunter);
-  --primary-foreground: oklch(1 0 0);
+  --primary-foreground: oklch(0.99 0.01 130);
   --secondary: var(--lime-cream);
   --secondary-foreground: var(--evergreen);
-  --muted: oklch(0.985 0.01 130);
-  --muted-foreground: oklch(0.45 0.03 145);
+  --muted: oklch(0.95 0.015 135);
+  --muted-foreground: oklch(0.42 0.03 145);
   --accent: var(--palm);
   --accent-foreground: var(--evergreen);
   --destructive: oklch(0.55 0.22 27);
   --destructive-foreground: oklch(1 0 0);
 
-  --border: oklch(0.92 0.02 130);
-  --input: oklch(0.92 0.02 130);
+  --border: oklch(0.88 0.025 140);
+  --input: oklch(0.88 0.025 140);
   --ring: var(--fern);
 
-  --sidebar: oklch(0.99 0.01 130);
+  --sidebar: oklch(0.97 0.012 135);
   --sidebar-foreground: var(--evergreen);
   --sidebar-primary: var(--hunter);
   --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: var(--lime-cream);
   --sidebar-accent-foreground: var(--evergreen);
-  --sidebar-border: oklch(0.92 0.02 130);
+  --sidebar-border: oklch(0.88 0.025 140);
   --sidebar-ring: var(--fern);
 }
 
@@ -103,13 +105,19 @@
   * {
     border-color: var(--color-border);
   }
-  html, body {
+  html,
+  body {
     font-family: var(--font-sans);
     background-color: var(--color-background);
     color: var(--color-foreground);
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-display);
     letter-spacing: -0.01em;
     color: var(--color-evergreen);

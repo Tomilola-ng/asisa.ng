@@ -118,7 +118,7 @@ export const DEMO_POSTS: Post[] = [
     authorId: "demo-author",
     authorName: "Actuarial Science & Insurance Ascendants Rep",
     scope: "public",
-    body: "Welcome to the Actuarial Science & Insurance Ascendants. Sign in to see announcements, ask questions, and connect with classmates.",
+    body: "Welcome to Actuarial Science & Insurance Ascendants. Sign in for announcements and to talk with classmates.",
     createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
     reactions: 12,
     comments: 4,

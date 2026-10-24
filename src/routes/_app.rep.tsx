@@ -371,8 +371,7 @@ function CourseDialog({
           </DialogHeader>
           <div className="grid gap-4">
             <p className="-mt-1 text-xs text-muted-foreground">
-              The course thumbnail is set automatically from this level's image — manage it in Level
-              images.
+              The course thumbnail comes from this level&apos;s image. Change it under Level images.
             </p>
 
             <div className="grid grid-cols-2 gap-3">

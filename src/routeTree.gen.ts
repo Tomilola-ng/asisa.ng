@@ -13,8 +13,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
+import { Route as AppCgpaRouteImport } from './routes/_app.cgpa'
 import { Route as AppCoursesRouteImport } from './routes/_app.courses'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppExecutivesRouteImport } from './routes/_app.executives'
 import { Route as AppFeedRouteImport } from './routes/_app.feed'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppQuizRouteImport } from './routes/_app.quiz'
@@ -43,6 +45,11 @@ const AppAdminRoute = AppAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCgpaRoute = AppCgpaRouteImport.update({
+  id: '/cgpa',
+  path: '/cgpa',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCoursesRoute = AppCoursesRouteImport.update({
   id: '/courses',
   path: '/courses',
@@ -51,6 +58,11 @@ const AppCoursesRoute = AppCoursesRouteImport.update({
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppExecutivesRoute = AppExecutivesRouteImport.update({
+  id: '/executives',
+  path: '/executives',
   getParentRoute: () => AppRoute,
 } as any)
 const AppFeedRoute = AppFeedRouteImport.update({
@@ -98,8 +110,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AppAdminRoute
+  '/cgpa': typeof AppCgpaRoute
   '/courses': typeof AppCoursesRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
+  '/executives': typeof AppExecutivesRoute
   '/feed': typeof AppFeedRoute
   '/profile': typeof AppProfileRoute
   '/quiz': typeof AppQuizRouteWithChildren
@@ -113,7 +127,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AppAdminRoute
+  '/cgpa': typeof AppCgpaRoute
   '/dashboard': typeof AppDashboardRoute
+  '/executives': typeof AppExecutivesRoute
   '/feed': typeof AppFeedRoute
   '/profile': typeof AppProfileRoute
   '/rep': typeof AppRepRoute
@@ -128,8 +144,10 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/_app/admin': typeof AppAdminRoute
+  '/_app/cgpa': typeof AppCgpaRoute
   '/_app/courses': typeof AppCoursesRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/executives': typeof AppExecutivesRoute
   '/_app/feed': typeof AppFeedRoute
   '/_app/profile': typeof AppProfileRoute
   '/_app/quiz': typeof AppQuizRouteWithChildren
@@ -145,8 +163,10 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/cgpa'
     | '/courses'
     | '/dashboard'
+    | '/executives'
     | '/feed'
     | '/profile'
     | '/quiz'
@@ -160,7 +180,9 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/cgpa'
     | '/dashboard'
+    | '/executives'
     | '/feed'
     | '/profile'
     | '/rep'
@@ -174,8 +196,10 @@ export interface FileRouteTypes {
     | '/_app'
     | '/auth'
     | '/_app/admin'
+    | '/_app/cgpa'
     | '/_app/courses'
     | '/_app/dashboard'
+    | '/_app/executives'
     | '/_app/feed'
     | '/_app/profile'
     | '/_app/quiz'
@@ -222,6 +246,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/cgpa': {
+      id: '/_app/cgpa'
+      path: '/cgpa'
+      fullPath: '/cgpa'
+      preLoaderRoute: typeof AppCgpaRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/courses': {
       id: '/_app/courses'
       path: '/courses'
@@ -234,6 +265,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/executives': {
+      id: '/_app/executives'
+      path: '/executives'
+      fullPath: '/executives'
+      preLoaderRoute: typeof AppExecutivesRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/feed': {
@@ -324,8 +362,10 @@ const AppQuizRouteWithChildren =
 
 interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
+  AppCgpaRoute: typeof AppCgpaRoute
   AppCoursesRoute: typeof AppCoursesRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
+  AppExecutivesRoute: typeof AppExecutivesRoute
   AppFeedRoute: typeof AppFeedRoute
   AppProfileRoute: typeof AppProfileRoute
   AppQuizRoute: typeof AppQuizRouteWithChildren
@@ -334,8 +374,10 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAdminRoute: AppAdminRoute,
+  AppCgpaRoute: AppCgpaRoute,
   AppCoursesRoute: AppCoursesRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
+  AppExecutivesRoute: AppExecutivesRoute,
   AppFeedRoute: AppFeedRoute,
   AppProfileRoute: AppProfileRoute,
   AppQuizRoute: AppQuizRouteWithChildren,

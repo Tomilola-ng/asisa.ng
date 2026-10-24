@@ -146,7 +146,7 @@ function ProfilePage() {
       <div>
         <h1 className="font-display text-3xl font-semibold">Profile</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Manage your account and student information.
+          Your account and student details.
         </p>
       </div>
 

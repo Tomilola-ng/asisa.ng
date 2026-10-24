@@ -67,8 +67,8 @@ function QuizHub() {
             <p className="text-sm text-white">Practice</p>
             <h1 className="mt-1 font-display text-3xl font-semibold text-white">Quiz</h1>
             <p className="mt-2 inline-flex items-center gap-2 text-sm text-white">
-              <PatchQuestion size={14} className="shrink-0 text-white" /> Auto-extracted questions,
-              published per course.
+              <PatchQuestion size={14} className="shrink-0 text-white" /> Questions taken from
+              uploads, listed by course.
             </p>
           </div>
           {canPublish && (
@@ -291,7 +291,7 @@ function CreateQuizDialog({
               This is a photo/scan with two columns (like an exam paper)
             </label>
             <p className="text-xs text-muted-foreground">
-              We try to detect columns automatically — check this if the scan came out jumbled (text
+              We try to detect columns automatically. Check this if the scan came out jumbled (text
               from both columns mixed on one line).
             </p>
           </div>
@@ -300,7 +300,7 @@ function CreateQuizDialog({
         {step === "preview" && (
           <div className="space-y-4">
             <p className="text-xs text-muted-foreground">
-              Extracted from <span className="font-medium">{fileName}</span> — edit anything the
+              Extracted from <span className="font-medium">{fileName}</span>. Edit anything the
               scan got wrong.
             </p>
             {unmarkedMcqCount > 0 && (
@@ -358,8 +358,8 @@ function CreateQuizDialog({
             {unmarkedMcqCount > 0 && (
               <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
                 {unmarkedMcqCount} of those multiple-choice question{unmarkedMcqCount === 1 ? "" : "s"}{" "}
-                still {unmarkedMcqCount === 1 ? "has" : "have"} no correct answer marked — go back
-                and select one for each, or students won't get a score.
+                still {unmarkedMcqCount === 1 ? "has" : "have"} no correct answer marked. Go back
+                and select one for each, or students won&apos;t get a score.
               </p>
             )}
           </div>

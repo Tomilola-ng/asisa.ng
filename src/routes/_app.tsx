@@ -8,9 +8,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { PLATFORM_NAME, PLATFORM_NAME_LINES } from "@/lib/brand";
 import {
   Book,
+  Calculator,
   ChatSquareText,
   List,
   PatchQuestion,
+  People,
   ShieldLock,
   PersonBadge,
 } from "react-bootstrap-icons";
@@ -61,6 +63,8 @@ function AppLayout() {
   const nav = [
     { title: "Courses", to: "/courses", icon: Book },
     { title: "Feed", to: "/feed", icon: ChatSquareText },
+    { title: "Execs", to: "/executives", icon: People },
+    { title: "CGPA", to: "/cgpa", icon: Calculator },
     ...(showQuiz ? [{ title: "Quiz", to: "/quiz", icon: PatchQuestion }] : []),
   ] as const;
 
